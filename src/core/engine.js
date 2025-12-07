@@ -48,7 +48,8 @@ export function bootstrapVerumMotus() {
     }
   }
 
-  const innerPulseLayer = new InnerPulseLayer();
+  const pulseConfig = stateOrchestrator.getCurrentPulseConfig();
+  const innerPulseLayer = new InnerPulseLayer(pulseConfig);
   registerLayer(innerPulseLayer);
 
   let lastTime = now();
