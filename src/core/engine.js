@@ -4,6 +4,7 @@ import { now } from '../utils/time.js';
 import { InnerPulseLayer } from '../layers/innerPulseLayer.js';
 import { INTERNAL_STATES } from '../states/internalStates.js';
 import { createStateMachine } from '../states/stateMachine.js';
+import { createStateOrchestrator } from '../states/stateOrchestrator.js';
 
 export function bootstrapVerumMotus() {
   // Escena base silenciosa; luego se conectaran capas y estados.
@@ -32,6 +33,9 @@ export function bootstrapVerumMotus() {
     allowedStates: Object.values(INTERNAL_STATES),
   });
   // Estado interno global de Verum Motus; mas adelante modularemos capas y transiciones desde aqui.
+
+  const stateOrchestrator = createStateOrchestrator(stateMachine);
+  // El orquestador expone configuraciones derivadas del estado (p.ej. Pulso Interno); se conectara en bloques siguientes.
 
   appElement.innerHTML = '';
   appElement.appendChild(renderer.domElement);
