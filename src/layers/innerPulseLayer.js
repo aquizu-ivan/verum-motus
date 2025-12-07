@@ -3,17 +3,21 @@ import { BaseLayer } from './baseLayer.js';
 import { Mesh, SphereGeometry, MeshBasicMaterial } from 'three';
 
 export class InnerPulseLayer extends BaseLayer {
-  constructor() {
+  constructor(pulseConfig) {
     super();
     this.mesh = null;
     this.elapsedTime = 0;
     this.baseScale = 1;
+
+    this.frequency = pulseConfig?.frequency ?? 1 / 6;
+    this.amplitude = pulseConfig?.amplitude ?? 0.03;
+    this.color = pulseConfig?.color ?? 0xdddddd;
   }
 
   init(scene) {
     // Forma minima en el origen; presencia sutil sobre el fondo negro.
     const geometry = new SphereGeometry(0.1, 24, 24);
-    const material = new MeshBasicMaterial({ color: 0xdddddd });
+    const material = new MeshBasicMaterial({ color: this.color });
     const mesh = new Mesh(geometry, material);
     mesh.position.set(0, 0, 0);
 
@@ -25,12 +29,10 @@ export class InnerPulseLayer extends BaseLayer {
     if (!this.mesh) {
       return;
     }
-    const deltaSeconds = deltaTime / 1000;
+    const deltaSeconds = deltaTime / 1000; // deltaTime llega en ms
     this.elapsedTime += deltaSeconds;
 
-    const frequency = 1 / 6; // ~1 ciclo cada 6 segundos
-    const amplitude = 0.03; // variacion suave alrededor de la escala base
-    const scaleOffset = Math.sin(this.elapsedTime * 2 * Math.PI * frequency) * amplitude;
+    const scaleOffset = Math.sin(this.elapsedTime * 2 * Math.PI * this.frequency) * this.amplitude;
     const scale = this.baseScale + scaleOffset;
 
     this.mesh.scale.set(scale, scale, scale);
