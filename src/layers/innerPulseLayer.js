@@ -9,9 +9,7 @@ export class InnerPulseLayer extends BaseLayer {
     this.elapsedTime = 0;
     this.baseScale = 1;
 
-    this.frequency = pulseConfig?.frequency ?? 1 / 6;
-    this.amplitude = pulseConfig?.amplitude ?? 0.03;
-    this.color = pulseConfig?.color ?? 0xdddddd;
+    this.applyPulseConfig(pulseConfig);
   }
 
   init(scene) {
@@ -36,6 +34,20 @@ export class InnerPulseLayer extends BaseLayer {
     const scale = this.baseScale + scaleOffset;
 
     this.mesh.scale.set(scale, scale, scale);
+  }
+
+  applyPulseConfig(pulseConfig) {
+    const frequency = pulseConfig?.frequency ?? 1 / 6;
+    const amplitude = pulseConfig?.amplitude ?? 0.03;
+    const color = pulseConfig?.color ?? 0xdddddd;
+
+    this.frequency = frequency;
+    this.amplitude = amplitude;
+    this.color = color;
+
+    if (this.mesh && this.mesh.material) {
+      this.mesh.material.color.setHex(this.color);
+    }
   }
 
   onResize(/* width, height */) {
