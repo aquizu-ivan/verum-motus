@@ -72,3 +72,9 @@ Se centralizan en `config/constants.js` para ajustar el pulso en un solo lugar s
 ## Notas de ciclo de vida
 - Cada capa/coordinador debe implementar `dispose()` (remover de la escena si corresponde y liberar geometry/material/listeners/timers).
 - Un manager de lifecycle podrÇ­ agregarse mÇås adelante para centralizar limpiezas, pero hoy el contrato individual es suficiente.
+
+## Timeline del Pulso
+- El recorrido se declara en PULSE_STATE_TIMELINE con segmentos (romState, 	oState, delayMs).
+- pulseStateCoordinator usa esa secuencia para programar el siguiente setState desde el estado actual y limpia su timer activo en dispose().
+- Permite a�adir pasos futuros (p.ej. RITMO_EMERGE, DISTORSION_APERTURA) solo editando la timeline, sin complejizar el coordinador.
+
