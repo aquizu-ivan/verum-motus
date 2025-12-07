@@ -2,6 +2,7 @@
 import { Scene, PerspectiveCamera, WebGLRenderer } from 'three';
 import { now } from '../utils/time.js';
 import { InnerPulseLayer } from '../layers/innerPulseLayer.js';
+import { PulseHaloLayer } from '../layers/pulseHaloLayer.js';
 import { INTERNAL_STATES } from '../states/internalStates.js';
 import { createStateMachine } from '../states/stateMachine.js';
 import { createStateOrchestrator } from '../states/stateOrchestrator.js';
@@ -53,7 +54,10 @@ export function bootstrapVerumMotus() {
   const innerPulseLayer = new InnerPulseLayer(pulseConfig);
   registerLayer(innerPulseLayer);
 
-  const pulseTargets = [innerPulseLayer];
+  const haloLayer = new PulseHaloLayer(pulseConfig);
+  registerLayer(haloLayer);
+
+  const pulseTargets = [innerPulseLayer, haloLayer];
   const pulseCoordinator = createPulseStateCoordinator({
     stateMachine,
     stateOrchestrator,
