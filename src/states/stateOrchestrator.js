@@ -9,6 +9,9 @@ import {
   PULSO_INICIAL_FREQUENCY_HZ,
   PULSO_INICIAL_AMPLITUDE,
   PULSO_INICIAL_COLOR,
+  DESLIZAMIENTO_INTERNO_FREQUENCY_HZ,
+  DESLIZAMIENTO_INTERNO_AMPLITUDE,
+  DESLIZAMIENTO_INTERNO_COLOR,
 } from '../config/constants.js';
 
 export function createStateOrchestrator(stateMachine) {
@@ -23,6 +26,11 @@ export function createStateOrchestrator(stateMachine) {
       frequency: PULSO_INICIAL_FREQUENCY_HZ,
       amplitude: PULSO_INICIAL_AMPLITUDE,
       color: PULSO_INICIAL_COLOR,
+    },
+    [INTERNAL_STATES.DESLIZAMIENTO_INTERNO]: {
+      frequency: DESLIZAMIENTO_INTERNO_FREQUENCY_HZ,
+      amplitude: DESLIZAMIENTO_INTERNO_AMPLITUDE,
+      color: DESLIZAMIENTO_INTERNO_COLOR,
     },
     // Espacios para estados futuros (p.ej. RITMO_EMERGE, etc.).
   };
