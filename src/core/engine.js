@@ -1,6 +1,7 @@
 // src/core/engine.js
 import { Scene, PerspectiveCamera, WebGLRenderer } from 'three';
 import { now } from '../utils/time.js';
+import { InnerPulseLayer } from '../layers/innerPulseLayer.js';
 
 export function bootstrapVerumMotus() {
   // Escena base silenciosa; luego se conectaran capas y estados.
@@ -34,6 +35,9 @@ export function bootstrapVerumMotus() {
       layer.init(scene);
     }
   }
+
+  const innerPulseLayer = new InnerPulseLayer();
+  registerLayer(innerPulseLayer);
 
   let lastTime = now();
 
