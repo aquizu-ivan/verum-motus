@@ -12,6 +12,7 @@ import {
   PULSE_HALO_BASE_OPACITY,
   PULSE_HALO_OPACITY_VARIATION,
 } from '../config/constants.js';
+import { lerp, clamp } from '../utils/interpolation.js';
 
 export class PulseHaloLayer extends BaseLayer {
   constructor(pulseConfig) {
@@ -63,8 +64,7 @@ export class PulseHaloLayer extends BaseLayer {
 
     if (this.isTransitioning) {
       this.transitionElapsed += deltaSeconds;
-      const t = Math.min(this.transitionElapsed / PULSE_CONFIG_TRANSITION_DURATION_S, 1);
-      const lerp = (a, b, tValue) => a + (b - a) * tValue;
+      const t = clamp(this.transitionElapsed / PULSE_CONFIG_TRANSITION_DURATION_S, 0, 1);
 
       this.currentFrequency = lerp(this.startFrequency, this.targetFrequency, t);
       this.currentAmplitude = lerp(this.startAmplitude, this.targetAmplitude, t);
@@ -85,7 +85,7 @@ export class PulseHaloLayer extends BaseLayer {
     this.mesh.scale.set(scale, scale, scale);
 
     const opacityOffset = pulse * PULSE_HALO_OPACITY_VARIATION;
-    const nextOpacity = Math.min(Math.max(PULSE_HALO_BASE_OPACITY + opacityOffset, 0), 1);
+    const nextOpacity = clamp(PULSE_HALO_BASE_OPACITY + opacityOffset, 0, 1);
 
     if (this.mesh.material) {
       this.mesh.material.color.copy(this.currentColor);
