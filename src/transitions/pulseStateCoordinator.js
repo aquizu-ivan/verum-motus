@@ -4,10 +4,16 @@
 import { INTERNAL_STATES } from '../states/internalStates.js';
 import { INITIAL_STATE_TRANSITION_DELAY_MS } from '../config/constants.js';
 
-export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, innerPulseLayer }) {
+// Coordina el estado interno con la configuracion del Pulso Interno.
+// Escucha la stateMachine, consulta el orquestador y aplica la config a todos los targets de pulso.
+export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, pulseTargets }) {
   function handleStateChange(prevState, nextState) {
     const pulseConfig = stateOrchestrator.getCurrentPulseConfig();
-    innerPulseLayer.applyPulseConfig(pulseConfig);
+    pulseTargets.forEach((target) => {
+      if (target && typeof target.applyPulseConfig === 'function') {
+        target.applyPulseConfig(pulseConfig);
+      }
+    });
   }
 
   const unsubscribe = stateMachine.subscribe(handleStateChange);
