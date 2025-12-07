@@ -10,7 +10,12 @@ export function createStateOrchestrator(stateMachine) {
       amplitude: 0.03, // variacion minima de escala
       color: 0xdddddd, // gris suave actual
     },
-    // Espacios para estados futuros (p.ej. PULSO_INICIAL, RITMO_EMERGE, etc.).
+    [INTERNAL_STATES.PULSO_INICIAL]: {
+      frequency: 1 / 3, // pulso mas presente: el doble de rapido que INERCIA_VIVA
+      amplitude: 0.06, // el doble de amplitud: respiracion mas visible
+      color: 0xefefef, // gris ligeramente mas claro
+    },
+    // Espacios para estados futuros (p.ej. RITMO_EMERGE, etc.).
   };
 
   function getCurrentPulseConfig() {
