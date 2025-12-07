@@ -7,6 +7,7 @@ import {
   INERCIA_VIVA_COLOR,
   PULSE_CONFIG_TRANSITION_DURATION_S,
 } from '../config/constants.js';
+import { lerp, clamp } from '../utils/interpolation.js';
 
 export class InnerPulseLayer extends BaseLayer {
   constructor(pulseConfig) {
@@ -56,8 +57,7 @@ export class InnerPulseLayer extends BaseLayer {
 
     if (this.isTransitioning) {
       this.transitionElapsed += deltaSeconds;
-      const t = Math.min(this.transitionElapsed / PULSE_CONFIG_TRANSITION_DURATION_S, 1);
-      const lerp = (a, b, tValue) => a + (b - a) * tValue;
+      const t = clamp(this.transitionElapsed / PULSE_CONFIG_TRANSITION_DURATION_S, 0, 1);
 
       this.currentFrequency = lerp(this.startFrequency, this.targetFrequency, t);
       this.currentAmplitude = lerp(this.startAmplitude, this.targetAmplitude, t);

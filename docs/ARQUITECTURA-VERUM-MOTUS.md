@@ -57,3 +57,18 @@ Se centralizan en `config/constants.js` para ajustar el pulso en un solo lugar s
 - Centralizar ritmos, delays y colores base en `config/constants.js`.
 - Gestionar ciclo de vida: `dispose` de capas/coordinadores cuando cambien escenas o se reinicie el engine.
 - Evitar timers dispersos; preferir secuencias coordinadas desde pocos puntos claros.
+
+## PatrÇün de capa sincronizada con el Pulso
+- Recibe una `pulseConfig` inicial y mantiene estado `current/start/target` para los parÇ­metros que usa (frecuencia, amplitud, color, opacidad/escala segÇ§n la capa).
+- Implementa `init(scene)`, `update(deltaTime)`, `applyPulseConfig(config)` para activar transiciones internas, `onResize(...)` (NO-OP si no aplica) y `dispose()` liberando geometrÇ­as/materiales y retirando el mesh.
+- Usa helpers compartidos (`lerp`, `clamp`, etc.) para interpolar de forma consistente durante `PULSE_CONFIG_TRANSITION_DURATION_S`.
+
+## PatrÇün de coordinador de Pulso
+- Se alimenta de `stateMachine` y `stateOrchestrator`.
+- Aplica configs a un conjunto de targets (`pulseTargets`) via `applyPulseConfig`.
+- Gestiona rituales temporales (ej. delay inicial de transiciÇün de estado) y expone `dispose()` para limpiar listeners y timers.
+- A futuro, puede ser gestionado por un punto central de teardown para agrupar limpiezas de escena.
+
+## Notas de ciclo de vida
+- Cada capa/coordinador debe implementar `dispose()` (remover de la escena si corresponde y liberar geometry/material/listeners/timers).
+- Un manager de lifecycle podrÇ­ agregarse mÇås adelante para centralizar limpiezas, pero hoy el contrato individual es suficiente.
