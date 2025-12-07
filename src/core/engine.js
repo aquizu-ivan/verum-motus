@@ -5,6 +5,7 @@ import { InnerPulseLayer } from '../layers/innerPulseLayer.js';
 import { INTERNAL_STATES } from '../states/internalStates.js';
 import { createStateMachine } from '../states/stateMachine.js';
 import { createStateOrchestrator } from '../states/stateOrchestrator.js';
+import { createPulseStateCoordinator } from '../transitions/pulseStateCoordinator.js';
 
 export function bootstrapVerumMotus() {
   // Escena base silenciosa; luego se conectaran capas y estados.
@@ -51,6 +52,13 @@ export function bootstrapVerumMotus() {
   const pulseConfig = stateOrchestrator.getCurrentPulseConfig();
   const innerPulseLayer = new InnerPulseLayer(pulseConfig);
   registerLayer(innerPulseLayer);
+
+  const pulseCoordinator = createPulseStateCoordinator({
+    stateMachine,
+    stateOrchestrator,
+    innerPulseLayer,
+  });
+  // El coordinador conecta cambios de estado con la capa; dispose() se usara en teardown si se requiere.
 
   let lastTime = now();
 
