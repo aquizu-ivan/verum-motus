@@ -2,18 +2,27 @@
 // Orquestador simbolico: traduce el estado interno a parametros del Pulso Interno.
 // No conoce Three.js ni manipula capas; solo expone configs derivadas del estado actual.
 import { INTERNAL_STATES } from './internalStates.js';
+import {
+  INERCIA_VIVA_FREQUENCY_HZ,
+  INERCIA_VIVA_AMPLITUDE,
+  INERCIA_VIVA_COLOR,
+  PULSO_INICIAL_FREQUENCY_HZ,
+  PULSO_INICIAL_AMPLITUDE,
+  PULSO_INICIAL_COLOR,
+} from '../config/constants.js';
 
 export function createStateOrchestrator(stateMachine) {
+  // Mapa de estados internos a parametros del Pulso Interno.
   const pulseConfigsByState = {
     [INTERNAL_STATES.INERCIA_VIVA]: {
-      frequency: 1 / 6, // ~1 ciclo cada 6 segundos
-      amplitude: 0.03, // variacion minima de escala
-      color: 0xdddddd, // gris suave actual
+      frequency: INERCIA_VIVA_FREQUENCY_HZ,
+      amplitude: INERCIA_VIVA_AMPLITUDE,
+      color: INERCIA_VIVA_COLOR,
     },
     [INTERNAL_STATES.PULSO_INICIAL]: {
-      frequency: 1 / 3, // pulso mas presente: el doble de rapido que INERCIA_VIVA
-      amplitude: 0.06, // el doble de amplitud: respiracion mas visible
-      color: 0xefefef, // gris ligeramente mas claro
+      frequency: PULSO_INICIAL_FREQUENCY_HZ,
+      amplitude: PULSO_INICIAL_AMPLITUDE,
+      color: PULSO_INICIAL_COLOR,
     },
     // Espacios para estados futuros (p.ej. RITMO_EMERGE, etc.).
   };
