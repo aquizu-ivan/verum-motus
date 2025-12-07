@@ -2,6 +2,8 @@
 import { Scene, PerspectiveCamera, WebGLRenderer } from 'three';
 import { now } from '../utils/time.js';
 import { InnerPulseLayer } from '../layers/innerPulseLayer.js';
+import { INTERNAL_STATES } from '../states/internalStates.js';
+import { createStateMachine } from '../states/stateMachine.js';
 
 export function bootstrapVerumMotus() {
   // Escena base silenciosa; luego se conectaran capas y estados.
@@ -24,6 +26,12 @@ export function bootstrapVerumMotus() {
   renderer.setSize(width, height);
   renderer.setPixelRatio(window.devicePixelRatio || 1);
   renderer.setClearColor(0x000000, 1); // lienzo negro, sin ruido visual
+
+  const stateMachine = createStateMachine({
+    initialState: INTERNAL_STATES.INERCIA_VIVA,
+    allowedStates: Object.values(INTERNAL_STATES),
+  });
+  // Estado interno global de Verum Motus; mas adelante modularemos capas y transiciones desde aqui.
 
   appElement.innerHTML = '';
   appElement.appendChild(renderer.domElement);
