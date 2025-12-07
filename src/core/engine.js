@@ -53,10 +53,11 @@ export function bootstrapVerumMotus() {
   const innerPulseLayer = new InnerPulseLayer(pulseConfig);
   registerLayer(innerPulseLayer);
 
+  const pulseTargets = [innerPulseLayer];
   const pulseCoordinator = createPulseStateCoordinator({
     stateMachine,
     stateOrchestrator,
-    innerPulseLayer,
+    pulseTargets,
   });
   // El coordinador conecta cambios de estado con la capa; dispose() se usara en teardown si se requiere.
 
