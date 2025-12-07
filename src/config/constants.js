@@ -14,3 +14,6 @@ export const PULSO_INICIAL_COLOR = 0xefefef;
 
 // Tiempo que INERCIA_VIVA permanece antes del primer cambio interno
 export const INITIAL_STATE_TRANSITION_DELAY_MS = 10000;
+
+// Duracion de la transicion entre configuraciones del Pulso Interno (en segundos)
+export const PULSE_CONFIG_TRANSITION_DURATION_S = 4;

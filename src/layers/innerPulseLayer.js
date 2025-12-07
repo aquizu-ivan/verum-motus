@@ -1,6 +1,12 @@
 // src/layers/innerPulseLayer.js
 import { BaseLayer } from './baseLayer.js';
-import { Mesh, SphereGeometry, MeshBasicMaterial } from 'three';
+import { Mesh, SphereGeometry, MeshBasicMaterial, Color } from 'three';
+import {
+  INERCIA_VIVA_FREQUENCY_HZ,
+  INERCIA_VIVA_AMPLITUDE,
+  INERCIA_VIVA_COLOR,
+  PULSE_CONFIG_TRANSITION_DURATION_S,
+} from '../config/constants.js';
 
 export class InnerPulseLayer extends BaseLayer {
   constructor(pulseConfig) {
@@ -9,13 +15,31 @@ export class InnerPulseLayer extends BaseLayer {
     this.elapsedTime = 0;
     this.baseScale = 1;
 
-    this.applyPulseConfig(pulseConfig);
+    const frequency = pulseConfig?.frequency ?? INERCIA_VIVA_FREQUENCY_HZ;
+    const amplitude = pulseConfig?.amplitude ?? INERCIA_VIVA_AMPLITUDE;
+    const colorHex = pulseConfig?.color ?? INERCIA_VIVA_COLOR;
+
+    this.currentFrequency = frequency;
+    this.startFrequency = frequency;
+    this.targetFrequency = frequency;
+
+    this.currentAmplitude = amplitude;
+    this.startAmplitude = amplitude;
+    this.targetAmplitude = amplitude;
+
+    const initialColor = new Color(colorHex);
+    this.currentColor = initialColor.clone();
+    this.startColor = initialColor.clone();
+    this.targetColor = initialColor.clone();
+
+    this.transitionElapsed = 0;
+    this.isTransitioning = false;
   }
 
   init(scene) {
     // Forma minima en el origen; presencia sutil sobre el fondo negro.
     const geometry = new SphereGeometry(0.1, 24, 24);
-    const material = new MeshBasicMaterial({ color: this.color });
+    const material = new MeshBasicMaterial({ color: this.currentColor });
     const mesh = new Mesh(geometry, material);
     mesh.position.set(0, 0, 0);
 
@@ -30,24 +54,48 @@ export class InnerPulseLayer extends BaseLayer {
     const deltaSeconds = deltaTime / 1000; // deltaTime llega en ms
     this.elapsedTime += deltaSeconds;
 
-    const scaleOffset = Math.sin(this.elapsedTime * 2 * Math.PI * this.frequency) * this.amplitude;
+    if (this.isTransitioning) {
+      this.transitionElapsed += deltaSeconds;
+      const t = Math.min(this.transitionElapsed / PULSE_CONFIG_TRANSITION_DURATION_S, 1);
+      const lerp = (a, b, tValue) => a + (b - a) * tValue;
+
+      this.currentFrequency = lerp(this.startFrequency, this.targetFrequency, t);
+      this.currentAmplitude = lerp(this.startAmplitude, this.targetAmplitude, t);
+      this.currentColor.lerpColors(this.startColor, this.targetColor, t);
+
+      if (t >= 1) {
+        this.currentFrequency = this.targetFrequency;
+        this.currentAmplitude = this.targetAmplitude;
+        this.currentColor.copy(this.targetColor);
+        this.isTransitioning = false;
+      }
+    }
+
+    const scaleOffset = Math.sin(this.elapsedTime * 2 * Math.PI * this.currentFrequency) * this.currentAmplitude;
     const scale = this.baseScale + scaleOffset;
 
     this.mesh.scale.set(scale, scale, scale);
+
+    if (this.mesh.material) {
+      this.mesh.material.color.copy(this.currentColor);
+    }
   }
 
   applyPulseConfig(pulseConfig) {
-    const frequency = pulseConfig?.frequency ?? 1 / 6;
-    const amplitude = pulseConfig?.amplitude ?? 0.03;
-    const color = pulseConfig?.color ?? 0xdddddd;
+    const frequency = pulseConfig?.frequency ?? INERCIA_VIVA_FREQUENCY_HZ;
+    const amplitude = pulseConfig?.amplitude ?? INERCIA_VIVA_AMPLITUDE;
+    const colorHex = pulseConfig?.color ?? INERCIA_VIVA_COLOR;
 
-    this.frequency = frequency;
-    this.amplitude = amplitude;
-    this.color = color;
+    this.startFrequency = this.currentFrequency;
+    this.startAmplitude = this.currentAmplitude;
+    this.startColor.copy(this.currentColor);
 
-    if (this.mesh && this.mesh.material) {
-      this.mesh.material.color.setHex(this.color);
-    }
+    this.targetFrequency = frequency;
+    this.targetAmplitude = amplitude;
+    this.targetColor.set(colorHex);
+
+    this.transitionElapsed = 0;
+    this.isTransitioning = true;
   }
 
   onResize(/* width, height */) {
