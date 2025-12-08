@@ -15,6 +15,18 @@ import {
   RITMO_EMERGE_FREQUENCY_HZ,
   RITMO_EMERGE_AMPLITUDE,
   RITMO_EMERGE_COLOR,
+  INERCIA_VIVA_HALO_SCALE_MULTIPLIER,
+  INERCIA_VIVA_HALO_OPACITY,
+  INERCIA_VIVA_HALO_VARIATION,
+  PULSO_INICIAL_HALO_SCALE_MULTIPLIER,
+  PULSO_INICIAL_HALO_OPACITY,
+  PULSO_INICIAL_HALO_VARIATION,
+  DESLIZAMIENTO_INTERNO_HALO_SCALE_MULTIPLIER,
+  DESLIZAMIENTO_INTERNO_HALO_OPACITY,
+  DESLIZAMIENTO_INTERNO_HALO_VARIATION,
+  RITMO_EMERGE_HALO_SCALE_MULTIPLIER,
+  RITMO_EMERGE_HALO_OPACITY,
+  RITMO_EMERGE_HALO_VARIATION,
 } from '../config/constants.js';
 
 export function createStateOrchestrator(stateMachine) {
@@ -40,7 +52,29 @@ export function createStateOrchestrator(stateMachine) {
       amplitude: RITMO_EMERGE_AMPLITUDE,
       color: RITMO_EMERGE_COLOR,
     },
-    // Espacios para estados futuros (p.ej. RITMO_EMERGE, etc.).
+  };
+
+  const haloConfigsByState = {
+    [INTERNAL_STATES.INERCIA_VIVA]: {
+      scaleMultiplier: INERCIA_VIVA_HALO_SCALE_MULTIPLIER,
+      opacity: INERCIA_VIVA_HALO_OPACITY,
+      variation: INERCIA_VIVA_HALO_VARIATION,
+    },
+    [INTERNAL_STATES.PULSO_INICIAL]: {
+      scaleMultiplier: PULSO_INICIAL_HALO_SCALE_MULTIPLIER,
+      opacity: PULSO_INICIAL_HALO_OPACITY,
+      variation: PULSO_INICIAL_HALO_VARIATION,
+    },
+    [INTERNAL_STATES.DESLIZAMIENTO_INTERNO]: {
+      scaleMultiplier: DESLIZAMIENTO_INTERNO_HALO_SCALE_MULTIPLIER,
+      opacity: DESLIZAMIENTO_INTERNO_HALO_OPACITY,
+      variation: DESLIZAMIENTO_INTERNO_HALO_VARIATION,
+    },
+    [INTERNAL_STATES.RITMO_EMERGE]: {
+      scaleMultiplier: RITMO_EMERGE_HALO_SCALE_MULTIPLIER,
+      opacity: RITMO_EMERGE_HALO_OPACITY,
+      variation: RITMO_EMERGE_HALO_VARIATION,
+    },
   };
 
   function getCurrentPulseConfig() {
@@ -53,7 +87,25 @@ export function createStateOrchestrator(stateMachine) {
     return pulseConfigsByState[INTERNAL_STATES.INERCIA_VIVA];
   }
 
+  function getCurrentHaloConfig() {
+    const currentState = stateMachine.getCurrentState();
+    const config = haloConfigsByState[currentState];
+    if (config) {
+      return config;
+    }
+    return haloConfigsByState[INTERNAL_STATES.INERCIA_VIVA];
+  }
+
+  function getCurrentVisualConfig() {
+    return {
+      pulse: getCurrentPulseConfig(),
+      halo: getCurrentHaloConfig(),
+    };
+  }
+
   return {
     getCurrentPulseConfig,
+    getCurrentHaloConfig,
+    getCurrentVisualConfig,
   };
 }

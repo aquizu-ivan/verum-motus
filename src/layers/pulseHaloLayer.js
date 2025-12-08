@@ -11,6 +11,9 @@ import {
   PULSE_HALO_SCALE_MULTIPLIER,
   PULSE_HALO_BASE_OPACITY,
   PULSE_HALO_OPACITY_VARIATION,
+  INERCIA_VIVA_HALO_SCALE_MULTIPLIER,
+  INERCIA_VIVA_HALO_OPACITY,
+  INERCIA_VIVA_HALO_VARIATION,
 } from '../config/constants.js';
 import { lerp, clamp } from '../utils/interpolation.js';
 
@@ -38,6 +41,10 @@ export class PulseHaloLayer extends BaseLayer {
     this.isTransitioning = false;
     this.elapsedTime = 0;
     this.mesh = null;
+
+    this.haloScaleMultiplier = INERCIA_VIVA_HALO_SCALE_MULTIPLIER;
+    this.haloOpacityBase = INERCIA_VIVA_HALO_OPACITY;
+    this.haloVariationMultiplier = INERCIA_VIVA_HALO_VARIATION;
   }
 
   init(scene) {
@@ -45,7 +52,7 @@ export class PulseHaloLayer extends BaseLayer {
     const material = new MeshBasicMaterial({
       color: this.currentColor,
       transparent: true,
-      opacity: PULSE_HALO_BASE_OPACITY,
+      opacity: this.haloOpacityBase ?? PULSE_HALO_BASE_OPACITY,
     });
     const mesh = new Mesh(geometry, material);
     mesh.position.set(0, 0, 0);
@@ -80,12 +87,15 @@ export class PulseHaloLayer extends BaseLayer {
     this.elapsedTime += deltaSeconds;
     const pulse = Math.sin(2 * Math.PI * this.currentFrequency * this.elapsedTime);
 
-    const scaleOffset = pulse * this.currentAmplitude * PULSE_HALO_SCALE_MULTIPLIER;
-    const scale = PULSE_HALO_BASE_SCALE + scaleOffset;
+    const scaleBase = PULSE_HALO_BASE_SCALE * this.haloScaleMultiplier;
+    const scaleOffset =
+      pulse * this.currentAmplitude * PULSE_HALO_SCALE_MULTIPLIER * this.haloVariationMultiplier;
+    const scale = scaleBase + scaleOffset;
     this.mesh.scale.set(scale, scale, scale);
 
-    const opacityOffset = pulse * PULSE_HALO_OPACITY_VARIATION;
-    const nextOpacity = clamp(PULSE_HALO_BASE_OPACITY + opacityOffset, 0, 1);
+    const opacityBase = this.haloOpacityBase ?? PULSE_HALO_BASE_OPACITY;
+    const opacityOffset = pulse * PULSE_HALO_OPACITY_VARIATION * this.haloVariationMultiplier;
+    const nextOpacity = clamp(opacityBase + opacityOffset, 0, 1);
 
     if (this.mesh.material) {
       this.mesh.material.color.copy(this.currentColor);
@@ -108,6 +118,19 @@ export class PulseHaloLayer extends BaseLayer {
 
     this.transitionElapsed = 0;
     this.isTransitioning = true;
+  }
+
+  applyHaloConfig(haloConfig) {
+    if (!haloConfig) {
+      this.haloScaleMultiplier = INERCIA_VIVA_HALO_SCALE_MULTIPLIER;
+      this.haloOpacityBase = INERCIA_VIVA_HALO_OPACITY;
+      this.haloVariationMultiplier = INERCIA_VIVA_HALO_VARIATION;
+      return;
+    }
+
+    this.haloScaleMultiplier = haloConfig.scaleMultiplier ?? this.haloScaleMultiplier;
+    this.haloOpacityBase = haloConfig.opacity ?? this.haloOpacityBase;
+    this.haloVariationMultiplier = haloConfig.variation ?? this.haloVariationMultiplier;
   }
 
   onResize(/* width, height */) {
