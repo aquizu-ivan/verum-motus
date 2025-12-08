@@ -117,6 +117,10 @@ export function bootstrapVerumMotus() {
 
   window.addEventListener('resize', handleResize);
 
+  function getCurrentInternalState() {
+    return stateMachine.getCurrentState();
+  }
+
   return {
     dispose() {
       isRunning = false;
@@ -130,5 +134,6 @@ export function bootstrapVerumMotus() {
         renderer.domElement.parentElement.removeChild(renderer.domElement);
       }
     },
+    getCurrentInternalState,
   };
 }
