@@ -81,7 +81,9 @@ export function bootstrapVerumMotus() {
   let lastTime = now();
 
   function animate() {
-    requestAnimationFrame(animate);
+    if (!isRunning) {
+      return;
+    }
 
     const currentTime = now();
     const deltaTime = currentTime - lastTime; // deltaTime en milisegundos; usar deltaTime / 1000 para segundos.
@@ -94,9 +96,7 @@ export function bootstrapVerumMotus() {
     }
 
     renderer.render(scene, camera);
-    if (isRunning) {
-      animationFrameId = requestAnimationFrame(animate);
-    }
+    animationFrameId = requestAnimationFrame(animate);
   }
   animationFrameId = requestAnimationFrame(animate);
 
