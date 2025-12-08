@@ -10,11 +10,15 @@ import { createPulseStateCoordinator } from '../transitions/pulseStateCoordinato
 import {
   registerLayerForLifecycle,
   registerCoordinatorForLifecycle,
+  disposeAllLifecycle,
 } from './lifecycleManager.js';
+import { MAX_PIXEL_RATIO } from '../config/constants.js';
 
 export function bootstrapVerumMotus() {
   // Escena base silenciosa; luego se conectaran capas y estados.
   const layers = [];
+  let animationFrameId = null;
+  let isRunning = true;
 
   const appElement = document.getElementById('app');
   if (!appElement) {
@@ -31,7 +35,9 @@ export function bootstrapVerumMotus() {
 
   const renderer = new WebGLRenderer({ antialias: true });
   renderer.setSize(width, height);
-  renderer.setPixelRatio(window.devicePixelRatio || 1);
+  const devicePixelRatio = window.devicePixelRatio || 1;
+  const pixelRatio = Math.min(devicePixelRatio, MAX_PIXEL_RATIO);
+  renderer.setPixelRatio(pixelRatio);
   renderer.setClearColor(0x000000, 1); // lienzo negro, sin ruido visual
 
   const stateMachine = createStateMachine({
@@ -88,10 +94,13 @@ export function bootstrapVerumMotus() {
     }
 
     renderer.render(scene, camera);
+    if (isRunning) {
+      animationFrameId = requestAnimationFrame(animate);
+    }
   }
-  animate();
+  animationFrameId = requestAnimationFrame(animate);
 
-  window.addEventListener('resize', () => {
+  function handleResize() {
     const newWidth = window.innerWidth;
     const newHeight = window.innerHeight;
 
@@ -104,5 +113,22 @@ export function bootstrapVerumMotus() {
         layer.onResize(newWidth, newHeight);
       }
     }
-  });
+  }
+
+  window.addEventListener('resize', handleResize);
+
+  return {
+    dispose() {
+      isRunning = false;
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      window.removeEventListener('resize', handleResize);
+      disposeAllLifecycle();
+      if (renderer.domElement?.parentElement) {
+        renderer.domElement.parentElement.removeChild(renderer.domElement);
+      }
+    },
+  };
 }

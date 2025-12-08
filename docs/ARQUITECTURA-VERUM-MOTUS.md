@@ -93,3 +93,12 @@ Se centralizan en `config/constants.js` para ajustar el pulso en un solo lugar s
 - Pixel ratio: usar renderer.setPixelRatio en valores prudentes (<= 2.0 salvo decision explicita) para evitar sobrecosto.
 - Capas y timers: priorizar pocas entidades significativas; toda entidad con timers/listeners debe limpiar en dispose().
 - Teardown central: core/lifecycleManager registra coordinadores/capas y expone disposeAllLifecycle(); futuros resets o cambios de escena deben pasar por ahi para evitar fugas y estados inconsistentes.
+
+## Handle de escena y teardown
+- `bootstrapVerumMotus` devuelve un handle con `dispose()` pensado para rituales de reset/cambio de escena.
+- Orden esperado al invocarlo: 1) detener el loop (`cancelAnimationFrame` + bandera), 2) remover el listener de `resize`, 3) llamar `disposeAllLifecycle()` para limpiar coordinadores y capas.
+- Las capas/coordinadores no se autodestruyen: la orquestacion del apagado vive en este handle de escena; capas y coordinadores siguen ciegos al estado global.
+
+## Guardrail de pixelRatio
+- El renderer usa `setPixelRatio` clamped por `MAX_PIXEL_RATIO` para evitar resoluciones excesivas en pantallas HiDPI.
+- Es una decision consciente para preservar performance y mantener el caracter contemplativo sin introducir artefactos visuales ni ruido extra.

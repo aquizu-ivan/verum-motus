@@ -31,3 +31,6 @@ export const PULSE_HALO_BASE_SCALE = 1.0;
 export const PULSE_HALO_SCALE_MULTIPLIER = 1.5;
 export const PULSE_HALO_BASE_OPACITY = 0.18;
 export const PULSE_HALO_OPACITY_VARIATION = 0.06;
+
+// Guardrail para limitar el pixel ratio del renderer en pantallas HiDPI.
+export const MAX_PIXEL_RATIO = 2;
