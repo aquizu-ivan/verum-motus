@@ -61,6 +61,10 @@ Se centralizan en `config/constants.js` para ajustar el pulso en un solo lugar s
 
 La progresion entre estados se manifiesta por cambios combinados de frecuencia, amplitud, color y respiracion del halo (escala, opacidad y variacion), todo parametrizado en `config/constants.js` sin tocar engine ni capas.
 
+### Nota experimental sobre tercera capa (outer field)
+- Existe una capa `outerFieldLayer` pensada como campo externo. En la version exhibible actual de Verum Motus esta capa permanece desactivada: la obra vive sobre dos capas activas (pulso interno y halo).
+- Su parametrizacion sigue en `config/constants.js` como exploracion futura; no participa del ciclo actual ni del rendering.
+
 ## Lineas de diseno para futuros estados y capas
 - Mantener `core/engine.js` como ensamblador + loop, sin logica narrativa.
 - Definir nuevos estados en `internalStates` y mapear sus parametros en orquestadores.

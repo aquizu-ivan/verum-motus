@@ -57,3 +57,27 @@ export const RITMO_EMERGE_HALO_VARIATION = 1.12;
 
 // Guardrail para limitar el pixel ratio del renderer en pantallas HiDPI.
 export const MAX_PIXEL_RATIO = 2;
+
+// Parametros base del campo externo (outer field)
+export const OUTER_FIELD_BASE_RADIUS = 0.6;
+export const OUTER_FIELD_BASE_SCALE = 1.45;
+export const OUTER_FIELD_SCALE_MULTIPLIER = 1.15;
+export const OUTER_FIELD_BASE_OPACITY = 0.05;
+export const OUTER_FIELD_OPACITY_VARIATION = 0.025;
+
+// Moduladores per-estado del campo externo (escala, opacidad, variacion)
+export const INERCIA_VIVA_OUTER_FIELD_SCALE_MULTIPLIER = 1.0;
+export const INERCIA_VIVA_OUTER_FIELD_OPACITY = 0.035;
+export const INERCIA_VIVA_OUTER_FIELD_VARIATION = 0.35;
+
+export const PULSO_INICIAL_OUTER_FIELD_SCALE_MULTIPLIER = 1.04;
+export const PULSO_INICIAL_OUTER_FIELD_OPACITY = 0.055;
+export const PULSO_INICIAL_OUTER_FIELD_VARIATION = 0.5;
+
+export const DESLIZAMIENTO_INTERNO_OUTER_FIELD_SCALE_MULTIPLIER = 1.1;
+export const DESLIZAMIENTO_INTERNO_OUTER_FIELD_OPACITY = 0.075;
+export const DESLIZAMIENTO_INTERNO_OUTER_FIELD_VARIATION = 0.7;
+
+export const RITMO_EMERGE_OUTER_FIELD_SCALE_MULTIPLIER = 1.16;
+export const RITMO_EMERGE_OUTER_FIELD_OPACITY = 0.095;
+export const RITMO_EMERGE_OUTER_FIELD_VARIATION = 0.85;
