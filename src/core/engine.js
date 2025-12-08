@@ -61,6 +61,8 @@ export function bootstrapVerumMotus() {
   }
 
   const pulseConfig = stateOrchestrator.getCurrentPulseConfig();
+  const haloConfig = stateOrchestrator.getCurrentHaloConfig();
+
   const innerPulseLayer = new InnerPulseLayer(pulseConfig);
   registerLayer(innerPulseLayer);
   registerLayerForLifecycle(innerPulseLayer);

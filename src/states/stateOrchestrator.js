@@ -27,6 +27,18 @@ import {
   RITMO_EMERGE_HALO_SCALE_MULTIPLIER,
   RITMO_EMERGE_HALO_OPACITY,
   RITMO_EMERGE_HALO_VARIATION,
+  INERCIA_VIVA_OUTER_FIELD_SCALE_MULTIPLIER,
+  INERCIA_VIVA_OUTER_FIELD_OPACITY,
+  INERCIA_VIVA_OUTER_FIELD_VARIATION,
+  PULSO_INICIAL_OUTER_FIELD_SCALE_MULTIPLIER,
+  PULSO_INICIAL_OUTER_FIELD_OPACITY,
+  PULSO_INICIAL_OUTER_FIELD_VARIATION,
+  DESLIZAMIENTO_INTERNO_OUTER_FIELD_SCALE_MULTIPLIER,
+  DESLIZAMIENTO_INTERNO_OUTER_FIELD_OPACITY,
+  DESLIZAMIENTO_INTERNO_OUTER_FIELD_VARIATION,
+  RITMO_EMERGE_OUTER_FIELD_SCALE_MULTIPLIER,
+  RITMO_EMERGE_OUTER_FIELD_OPACITY,
+  RITMO_EMERGE_OUTER_FIELD_VARIATION,
 } from '../config/constants.js';
 
 export function createStateOrchestrator(stateMachine) {
@@ -96,16 +108,8 @@ export function createStateOrchestrator(stateMachine) {
     return haloConfigsByState[INTERNAL_STATES.INERCIA_VIVA];
   }
 
-  function getCurrentVisualConfig() {
-    return {
-      pulse: getCurrentPulseConfig(),
-      halo: getCurrentHaloConfig(),
-    };
-  }
-
   return {
     getCurrentPulseConfig,
     getCurrentHaloConfig,
-    getCurrentVisualConfig,
   };
 }
