@@ -17,10 +17,17 @@ export const DESLIZAMIENTO_INTERNO_FREQUENCY_HZ = 1 / 2;
 export const DESLIZAMIENTO_INTERNO_AMPLITUDE = 0.09;
 export const DESLIZAMIENTO_INTERNO_COLOR = 0xf5f5f5;
 
+// Ritmo de RITMO_EMERGE (pulso mas presente y definido, aun contenido)
+export const RITMO_EMERGE_FREQUENCY_HZ = 0.9;
+export const RITMO_EMERGE_AMPLITUDE = 0.12;
+export const RITMO_EMERGE_COLOR = 0xfafafa;
+
 // Tiempo que INERCIA_VIVA permanece antes del primer cambio interno
 export const INITIAL_STATE_TRANSITION_DELAY_MS = 10000;
 // Tiempo entre PULSO_INICIAL y DESLIZAMIENTO_INTERNO
 export const PULSO_INICIAL_TO_DESLIZAMIENTO_DELAY_MS = 8000;
+// Tiempo entre DESLIZAMIENTO_INTERNO y RITMO_EMERGE
+export const DESLIZAMIENTO_INTERNO_TO_RITMO_EMERGE_DELAY_MS = 9000;
 
 // Duracion de la transicion entre configuraciones del Pulso Interno (en segundos)
 export const PULSE_CONFIG_TRANSITION_DURATION_S = 4;
