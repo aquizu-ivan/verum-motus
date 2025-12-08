@@ -38,6 +38,22 @@ export const PULSE_HALO_BASE_SCALE = 0.96;
 export const PULSE_HALO_SCALE_MULTIPLIER = 1.4;
 export const PULSE_HALO_BASE_OPACITY = 0.14;
 export const PULSE_HALO_OPACITY_VARIATION = 0.05;
+// Moduladores per-estado del halo (escala, opacidad y variacion de respiracion)
+export const INERCIA_VIVA_HALO_SCALE_MULTIPLIER = 0.95;
+export const INERCIA_VIVA_HALO_OPACITY = 0.1;
+export const INERCIA_VIVA_HALO_VARIATION = 0.55;
+
+export const PULSO_INICIAL_HALO_SCALE_MULTIPLIER = 1.02;
+export const PULSO_INICIAL_HALO_OPACITY = 0.14;
+export const PULSO_INICIAL_HALO_VARIATION = 0.8;
+
+export const DESLIZAMIENTO_INTERNO_HALO_SCALE_MULTIPLIER = 1.12;
+export const DESLIZAMIENTO_INTERNO_HALO_OPACITY = 0.18;
+export const DESLIZAMIENTO_INTERNO_HALO_VARIATION = 1.0;
+
+export const RITMO_EMERGE_HALO_SCALE_MULTIPLIER = 1.22;
+export const RITMO_EMERGE_HALO_OPACITY = 0.22;
+export const RITMO_EMERGE_HALO_VARIATION = 1.15;
 
 // Guardrail para limitar el pixel ratio del renderer en pantallas HiDPI.
 export const MAX_PIXEL_RATIO = 2;

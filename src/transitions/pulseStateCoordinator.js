@@ -24,9 +24,13 @@ export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, p
 
   function handleStateChange(prevState, nextState) {
     const pulseConfig = stateOrchestrator.getCurrentPulseConfig();
+    const haloConfig = stateOrchestrator.getCurrentHaloConfig();
     pulseTargets.forEach((target) => {
       if (target && typeof target.applyPulseConfig === 'function') {
         target.applyPulseConfig(pulseConfig);
+      }
+      if (target && typeof target.applyHaloConfig === 'function') {
+        target.applyHaloConfig(haloConfig);
       }
     });
 
@@ -35,7 +39,7 @@ export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, p
 
   const unsubscribe = stateMachine.subscribe(handleStateChange);
 
-  scheduleNextFrom(stateMachine.getCurrentState());
+  handleStateChange(stateMachine.getCurrentState(), stateMachine.getCurrentState());
 
   return {
     dispose() {

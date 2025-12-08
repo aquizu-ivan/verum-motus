@@ -57,6 +57,7 @@ Se centralizan en `config/constants.js` para ajustar el pulso en un solo lugar s
 - `PULSO_INICIAL`: frecuencia algo mas presente y amplitud leve; color mas definido. El halo acompana con un leve ensanchamiento y un brillo sutil que marca el primer latido visible.
 - `DESLIZAMIENTO_INTERNO`: frecuencia fluida y amplitud media; color decidido. El halo expande y contrae con mayor variacion, sugiriendo movimiento sostenido y deslizante.
 - `RITMO_EMERGE`: frecuencia clara pero contemplativa y amplitud amplia sin agresividad; color mas luminoso. El halo se siente como un campo energetico visible, con opacidad moderada y variacion amplia pero suave.
+- Halo per-estado: los matices del halo (escala base, opacidad y variacion de la respiracion) se parametrizan en `config/constants.js` y se orquestan por estado via `stateOrchestrator` + `pulseStateCoordinator`; el halo permanece suave y contemplativo, pero ajusta su presencia en cada estado.
 
 La progresion entre estados se manifiesta por cambios combinados de frecuencia, amplitud, color y respiracion del halo (escala, opacidad y variacion), todo parametrizado en `config/constants.js` sin tocar engine ni capas.
 
