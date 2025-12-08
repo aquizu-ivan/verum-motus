@@ -78,3 +78,18 @@ Se centralizan en `config/constants.js` para ajustar el pulso en un solo lugar s
 - pulseStateCoordinator usa esa secuencia para programar el siguiente setState desde el estado actual y limpia su timer activo en dispose().
 - Permite añadir pasos futuros (p.ej. RITMO_EMERGE, DISTORSION_APERTURA) solo editando la timeline, sin complejizar el coordinador.
 
+
+## Control temporal del Pulso
+- En esta fase, la secuencia del Pulso la gobiernan PULSE_STATE_TIMELINE (declaracion de pasos) y pulseStateCoordinator (lee la timeline y dispara setState).
+- stateMachine.setState para el Pulso no se llama manualmente ni desde otras piezas: cualquier cambio debe pasar por la timeline/coordinadores.
+- Para extender la secuencia: 1) declarar el estado en internalStates, 2) asignarle parametros en stateOrchestrator, 3) agregar un segmento { fromState, toState, delayMs } en PULSE_STATE_TIMELINE.
+
+## Nuevas capas sincronizadas con el Pulso
+- Deben ser ciegas al estado global: no leen stateMachine; reciben pulseConfig y/o coordinadores.
+- Interpolan sus parametros con helpers compartidos (lerp, clamp) respetando PULSE_CONFIG_TRANSITION_DURATION_S para transiciones coherentes.
+- Implementan dispose() retirando su mesh de la escena y liberando geometry/material; sin leaks de Three.js.
+
+## Guardrails de performance y lifecycle
+- Pixel ratio: usar renderer.setPixelRatio en valores prudentes (<= 2.0 salvo decision explicita) para evitar sobrecosto.
+- Capas y timers: priorizar pocas entidades significativas; toda entidad con timers/listeners debe limpiar en dispose().
+- Teardown central: core/lifecycleManager registra coordinadores/capas y expone disposeAllLifecycle(); futuros resets o cambios de escena deben pasar por ahi para evitar fugas y estados inconsistentes.
