@@ -60,7 +60,6 @@ export class PulseHaloLayer extends BaseLayer {
     }
 
     const deltaSeconds = deltaTime / 1000;
-    this.elapsedTime += deltaSeconds;
 
     if (this.isTransitioning) {
       this.transitionElapsed += deltaSeconds;
@@ -78,6 +77,7 @@ export class PulseHaloLayer extends BaseLayer {
       }
     }
 
+    this.elapsedTime += deltaSeconds;
     const pulse = Math.sin(2 * Math.PI * this.currentFrequency * this.elapsedTime);
 
     const scaleOffset = pulse * this.currentAmplitude * PULSE_HALO_SCALE_MULTIPLIER;

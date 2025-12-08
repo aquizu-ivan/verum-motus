@@ -53,7 +53,6 @@ export class InnerPulseLayer extends BaseLayer {
       return;
     }
     const deltaSeconds = deltaTime / 1000; // deltaTime llega en ms
-    this.elapsedTime += deltaSeconds;
 
     if (this.isTransitioning) {
       this.transitionElapsed += deltaSeconds;
@@ -71,7 +70,10 @@ export class InnerPulseLayer extends BaseLayer {
       }
     }
 
-    const scaleOffset = Math.sin(this.elapsedTime * 2 * Math.PI * this.currentFrequency) * this.currentAmplitude;
+    this.elapsedTime += deltaSeconds;
+
+    const phase = this.elapsedTime * 2 * Math.PI * this.currentFrequency;
+    const scaleOffset = Math.sin(phase) * this.currentAmplitude;
     const scale = this.baseScale + scaleOffset;
 
     this.mesh.scale.set(scale, scale, scale);
