@@ -84,6 +84,12 @@ La progresion entre estados se manifiesta por cambios combinados de frecuencia, 
 - Cada capa/coordinador debe implementar `dispose()` (remover de la escena si corresponde y liberar geometry/material/listeners/timers).
 - Un manager de lifecycle podria agregarse mas adelante para centralizar limpiezas, pero hoy el contrato individual es suficiente.
 
+## Lifecycle de Verum Motus
+### Checklist de lifecycle
+- Capas nuevas: implementar `update(deltaTime)` y `dispose()`, registrarse via la funcion oficial del lifecycle para capas, confirmar que `disposeAllLifecycle()` invoca su `dispose()` y que dejan de figurar en la coleccion interna (sin referencias pendientes).
+- Coordinadores nuevos: gestionar timers/listeners internos y limpiarlos en `dispose()`, registrarse via la funcion oficial del lifecycle para coordinadores, confirmar que `disposeAllLifecycle()` los invoca y desaparecen de la coleccion interna.
+- Prueba manual sugerida: iniciar la obra (`bootstrapVerumMotus()`), dejarla correr unos instantes, llamar `dispose()` del handle publico y verificar que no haya errores en consola, que no aparezca el warning `[IAQUIZU][LIFECYCLE]` (ideal) y que el canvas se retire del DOM. Este checklist es parte del QA basico para cualquier ticket que agregue capas, coordinadores o rituales.
+
 ## Timeline del Pulso
 - El recorrido se declara en PULSE_STATE_TIMELINE con segmentos (fromState, toState, delayMs).
 - `pulseStateCoordinator` usa esa secuencia para programar el siguiente `setState` desde el estado actual y limpia su timer activo en `dispose()`.
