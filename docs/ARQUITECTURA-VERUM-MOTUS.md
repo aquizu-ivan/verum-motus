@@ -106,3 +106,10 @@ Se centralizan en `config/constants.js` para ajustar el pulso en un solo lugar s
 ## Estado y timeline ampliados
 - Se incorpora `RITMO_EMERGE` como cuarta etapa del pulso tras `DESLIZAMIENTO_INTERNO`: pulso mas presente y definido, aun contenido.
 - La timeline declarativa del Pulso queda: `INERCIA_VIVA ? PULSO_INICIAL ? DESLIZAMIENTO_INTERNO ? RITMO_EMERGE`, cada tramo con su delay configurado en `config/constants.js`.
+
+## API publica de la escena
+- `bootstrapVerumMotus(container)` monta la obra en el contenedor y devuelve un handle con:
+  - `dispose()`: detiene el loop (`requestAnimationFrame`), remueve el listener de `resize`, llama `disposeAllLifecycle()` y retira el canvas.
+  - `getCurrentInternalState()`: devuelve el estado interno actual (p.ej. INERCIA_VIVA, PULSO_INICIAL, DESLIZAMIENTO_INTERNO, RITMO_EMERGE).
+- Contrato: `stateMachine.setState` no debe llamarse desde el exterior; los cambios de estado se orquestan via `PULSE_STATE_TIMELINE` y coordinadores/rituales autorizados.
+- Integracion: para apagar la obra, invocar `dispose()` del handle; para consultar el punto del recorrido interno, usar `getCurrentInternalState()`.
