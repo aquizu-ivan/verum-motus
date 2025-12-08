@@ -1,98 +1,108 @@
-# ARQUITECTURA DE VERUM MOTUS
+﻿# ARQUITECTURA DE VERUM MOTUS
 
-## Visión técnica
-Verum Motus es una obra contemplativa del Octavo Arte centrada en el Pulso Interno como primer movimiento vivo. El sistema técnico prioriza el lenguaje de estados y la composición por capas sobre patrones de app tradicional. El foco actual es un lienzo silencioso donde un pulso mínimo atraviesa su primer cambio de estado sin UI ni ornamentos.
+## Vision tecnica
+Verum Motus es una obra contemplativa del Octavo Arte centrada en el Pulso Interno como primer movimiento vivo. El sistema tecnico prioriza el lenguaje de estados y la composicion por capas sobre patrones de app tradicional. El foco actual es un lienzo silencioso donde un pulso minimo atraviesa su primer cambio de estado sin UI ni ornamentos.
 
 ## Estructura de carpetas y roles
-- `core/`: engine y loop Three.js (escena/cámara/renderer), registro de capas, resize.
+- `core/`: engine y loop Three.js (escena/camara/renderer), registro de capas, resize.
 - `layers/`: capas visuales independientes; cada una representa un fragmento del movimiento.
-- `states/`: vocabulario interno (`internalStates`), `stateMachine` genérica y orquestadores estado→parámetros.
-- `transitions/`: coordinadores/rituales que escuchan la máquina y aplican cambios a capas/escena.
+- `states/`: vocabulario interno (`internalStates`), `stateMachine` generica y orquestadores estado->parametros.
+- `transitions/`: coordinadores/rituales que escuchan la maquina y aplican cambios a capas/escena.
 - `utils/`: utilidades transversales (tiempo, helpers).
-- `config/`: constantes globales (versión, ritmo interno, delays).
+- `config/`: constantes globales (version, ritmo interno, delays).
 
-Separación de responsabilidades:
+Separacion de responsabilidades:
 - engine = ensamblador + loop
 - stateMachine = estado puro
-- orquestador(es) = mapeo estado→parámetros
-- coordinador(es) = escucha de estados y aplicación de parámetros
-- capas = visualización parametrizable y ciega al estado global
+- orquestador(es) = mapeo estado->parametros
+- coordinador(es) = escucha de estados y aplicacion de parametros
+- capas = visualizacion parametrizable y ciega al estado global
 
 ## Sistema de estados actuales
-- `INERCIA_VIVA`: estado inicial, pulso mínimo.
+- `INERCIA_VIVA`: estado inicial, pulso minimo.
 - `PULSO_INICIAL`: primer movimiento visible del Pulso Interno.
+- `DESLIZAMIENTO_INTERNO`: desplazamiento interno sostenido.
+- `RITMO_EMERGE`: presencia mas manifiesta, aun contemplativa.
 
 Flujo:
 ```
 INTERNAL_STATES
-    → stateMachine
-    → stateOrchestrator
-    → pulseStateCoordinator
-    → InnerPulseLayer
-    → engine (loop + render)
+    -> stateMachine
+    -> stateOrchestrator
+    -> pulseStateCoordinator
+    -> InnerPulseLayer
+    -> engine (loop + render)
 ```
 
-## Primer ritual interno: INERCIA_VIVA → PULSO_INICIAL
+## Primer ritual interno: INERCIA_VIVA -> PULSO_INICIAL
 - Arranque en `INERCIA_VIVA`.
-- `pulseStateCoordinator` espera `INITIAL_STATE_TRANSITION_DELAY_MS` (~10s).
-- Dispara `stateMachine.setState(PULSO_INICIAL)`.
-- La suscripción del coordinador consulta el orquestador y aplica la nueva config con `InnerPulseLayer.applyPulseConfig`.
-- La lógica del ritual vive en `transitions/`; el engine se mantiene neutro y la capa solo reacciona a parámetros.
+- `pulseStateCoordinator` espera `INITIAL_STATE_TRANSITION_DELAY_MS` y dispara `stateMachine.setState(PULSO_INICIAL)`.
+- La suscripcion del coordinador consulta el orquestador y aplica la nueva config con `InnerPulseLayer.applyPulseConfig`.
+- La logica del ritual vive en `transitions/`; el engine se mantiene neutro y la capa solo reacciona a parametros.
 
-## Patrón de capas parametrizables (InnerPulseLayer)
-InnerPulseLayer recibe `pulseConfig`, define defaults, implementa `init(scene)`, `update(deltaTime)` y `applyPulseConfig(config)`. Anima su movimiento con `deltaTime` y ajusta material/escala según parámetros sin conocer la máquina de estados. Este patrón permite capas desacopladas y reconfigurables: reaccionan a cambios de estado a través de coordinadores, no por acceso directo al estado global.
+## Patron de capas parametrizables (InnerPulseLayer)
+InnerPulseLayer recibe `pulseConfig`, define defaults, implementa `init(scene)`, `update(deltaTime)` y `applyPulseConfig(config)`. Anima su movimiento con `deltaTime` y ajusta material/escala segun parametros sin conocer la maquina de estados. Este patron permite capas desacopladas y reconfigurables: reaccionan a cambios de estado a traves de coordinadores, no por acceso directo al estado global.
 
 ## Constantes del ritmo interno
 - `INERCIA_VIVA_FREQUENCY_HZ`, `INERCIA_VIVA_AMPLITUDE`, `INERCIA_VIVA_COLOR`.
 - `PULSO_INICIAL_FREQUENCY_HZ`, `PULSO_INICIAL_AMPLITUDE`, `PULSO_INICIAL_COLOR`.
-- `INITIAL_STATE_TRANSITION_DELAY_MS`.
+- `DESLIZAMIENTO_INTERNO_FREQUENCY_HZ`, `DESLIZAMIENTO_INTERNO_AMPLITUDE`, `DESLIZAMIENTO_INTERNO_COLOR`.
+- `RITMO_EMERGE_FREQUENCY_HZ`, `RITMO_EMERGE_AMPLITUDE`, `RITMO_EMERGE_COLOR`.
+- `INITIAL_STATE_TRANSITION_DELAY_MS`, `PULSO_INICIAL_TO_DESLIZAMIENTO_DELAY_MS`, `DESLIZAMIENTO_INTERNO_TO_RITMO_EMERGE_DELAY_MS`.
 
 Se centralizan en `config/constants.js` para ajustar el pulso en un solo lugar sin tocar orquestadores, coordinadores ni capas.
 
-## Líneas de diseño para futuros estados y capas
-- Mantener `core/engine.js` como ensamblador + loop, sin lógica narrativa.
-- Definir nuevos estados en `internalStates` y mapear sus parámetros en orquestadores.
-- Hacer capas siempre parametrizables (métodos tipo `applyConfig`), sin acceso directo a la stateMachine.
-- Añadir rituales en `transitions/` (coordinadores/managers), nunca dentro del engine o las capas.
+## Calibracion sensorial actual del Pulso + Halo
+- `INERCIA_VIVA`: frecuencia lenta y micro-amplitud; color casi apagado. El halo respira apenas (escala base contenida y opacidad baja) para insinuar vida sin distraer.
+- `PULSO_INICIAL`: frecuencia algo mas presente y amplitud leve; color mas definido. El halo acompana con un leve ensanchamiento y un brillo sutil que marca el primer latido visible.
+- `DESLIZAMIENTO_INTERNO`: frecuencia fluida y amplitud media; color decidido. El halo expande y contrae con mayor variacion, sugiriendo movimiento sostenido y deslizante.
+- `RITMO_EMERGE`: frecuencia clara pero contemplativa y amplitud amplia sin agresividad; color mas luminoso. El halo se siente como un campo energetico visible, con opacidad moderada y variacion amplia pero suave.
+
+La progresion entre estados se manifiesta por cambios combinados de frecuencia, amplitud, color y respiracion del halo (escala, opacidad y variacion), todo parametrizado en `config/constants.js` sin tocar engine ni capas.
+
+## Lineas de diseno para futuros estados y capas
+- Mantener `core/engine.js` como ensamblador + loop, sin logica narrativa.
+- Definir nuevos estados en `internalStates` y mapear sus parametros en orquestadores.
+- Hacer capas siempre parametrizables (metodos tipo `applyConfig`), sin acceso directo a la stateMachine.
+- Anadir rituales en `transitions/` (coordinadores/managers), nunca dentro del engine o las capas.
 - Centralizar ritmos, delays y colores base en `config/constants.js`.
 - Gestionar ciclo de vida: `dispose` de capas/coordinadores cuando cambien escenas o se reinicie el engine.
 - Evitar timers dispersos; preferir secuencias coordinadas desde pocos puntos claros.
 
-## PatrÇün de capa sincronizada con el Pulso
-- Recibe una `pulseConfig` inicial y mantiene estado `current/start/target` para los parÇ­metros que usa (frecuencia, amplitud, color, opacidad/escala segÇ§n la capa).
-- Implementa `init(scene)`, `update(deltaTime)`, `applyPulseConfig(config)` para activar transiciones internas, `onResize(...)` (NO-OP si no aplica) y `dispose()` liberando geometrÇ­as/materiales y retirando el mesh.
+## Patron de capa sincronizada con el Pulso
+- Recibe una `pulseConfig` inicial y mantiene estado `current/start/target` para los parametros que usa (frecuencia, amplitud, color, opacidad/escala segun la capa).
+- Implementa `init(scene)`, `update(deltaTime)`, `applyPulseConfig(config)` para activar transiciones internas, `onResize(...)` (NO-OP si no aplica) y `dispose()` liberando geometria/materiales y retirando el mesh.
 - Usa helpers compartidos (`lerp`, `clamp`, etc.) para interpolar de forma consistente durante `PULSE_CONFIG_TRANSITION_DURATION_S`.
 
-## PatrÇün de coordinador de Pulso
+## Patron de coordinador de Pulso
 - Se alimenta de `stateMachine` y `stateOrchestrator`.
 - Aplica configs a un conjunto de targets (`pulseTargets`) via `applyPulseConfig`.
-- Gestiona rituales temporales (ej. delay inicial de transiciÇün de estado) y expone `dispose()` para limpiar listeners y timers.
+- Gestiona rituales temporales (ej. delay inicial de transicion de estado) y expone `dispose()` para limpiar listeners y timers.
 - A futuro, puede ser gestionado por un punto central de teardown para agrupar limpiezas de escena.
 
 ## Notas de ciclo de vida
 - Cada capa/coordinador debe implementar `dispose()` (remover de la escena si corresponde y liberar geometry/material/listeners/timers).
-- Un manager de lifecycle podrÇ­ agregarse mÇås adelante para centralizar limpiezas, pero hoy el contrato individual es suficiente.
+- Un manager de lifecycle podria agregarse mas adelante para centralizar limpiezas, pero hoy el contrato individual es suficiente.
 
 ## Timeline del Pulso
-- El recorrido se declara en PULSE_STATE_TIMELINE con segmentos (romState, 	oState, delayMs).
-- pulseStateCoordinator usa esa secuencia para programar el siguiente setState desde el estado actual y limpia su timer activo en dispose().
-- Permite a�adir pasos futuros (p.ej. RITMO_EMERGE, DISTORSION_APERTURA) solo editando la timeline, sin complejizar el coordinador.
-
+- El recorrido se declara en PULSE_STATE_TIMELINE con segmentos (fromState, toState, delayMs).
+- `pulseStateCoordinator` usa esa secuencia para programar el siguiente `setState` desde el estado actual y limpia su timer activo en `dispose()`.
+- Permite anadir pasos futuros (p.ej. RITMO_EMERGE, DISTORSION_APERTURA) solo editando la timeline, sin complejizar el coordinador.
 
 ## Control temporal del Pulso
-- En esta fase, la secuencia del Pulso la gobiernan PULSE_STATE_TIMELINE (declaracion de pasos) y pulseStateCoordinator (lee la timeline y dispara setState).
-- stateMachine.setState para el Pulso no se llama manualmente ni desde otras piezas: cualquier cambio debe pasar por la timeline/coordinadores.
-- Para extender la secuencia: 1) declarar el estado en internalStates, 2) asignarle parametros en stateOrchestrator, 3) agregar un segmento { fromState, toState, delayMs } en PULSE_STATE_TIMELINE.
+- En esta fase, la secuencia del Pulso la gobiernan PULSE_STATE_TIMELINE (declaracion de pasos) y `pulseStateCoordinator` (lee la timeline y dispara `setState`).
+- `stateMachine.setState` para el Pulso no se llama manualmente ni desde otras piezas: cualquier cambio debe pasar por la timeline/coordinadores.
+- Para extender la secuencia: 1) declarar el estado en `internalStates`, 2) asignarle parametros en `stateOrchestrator`, 3) agregar un segmento `{ fromState, toState, delayMs }` en `PULSE_STATE_TIMELINE`.
 
 ## Nuevas capas sincronizadas con el Pulso
-- Deben ser ciegas al estado global: no leen stateMachine; reciben pulseConfig y/o coordinadores.
-- Interpolan sus parametros con helpers compartidos (lerp, clamp) respetando PULSE_CONFIG_TRANSITION_DURATION_S para transiciones coherentes.
-- Implementan dispose() retirando su mesh de la escena y liberando geometry/material; sin leaks de Three.js.
+- Deben ser ciegas al estado global: no leen `stateMachine`; reciben `pulseConfig` y/o coordinadores.
+- Interpolan sus parametros con helpers compartidos (`lerp`, `clamp`) respetando `PULSE_CONFIG_TRANSITION_DURATION_S` para transiciones coherentes.
+- Implementan `dispose()` retirando su mesh de la escena y liberando geometry/material; sin leaks de Three.js.
 
 ## Guardrails de performance y lifecycle
-- Pixel ratio: usar renderer.setPixelRatio en valores prudentes (<= 2.0 salvo decision explicita) para evitar sobrecosto.
-- Capas y timers: priorizar pocas entidades significativas; toda entidad con timers/listeners debe limpiar en dispose().
-- Teardown central: core/lifecycleManager registra coordinadores/capas y expone disposeAllLifecycle(); futuros resets o cambios de escena deben pasar por ahi para evitar fugas y estados inconsistentes.
+- Pixel ratio: usar `renderer.setPixelRatio` en valores prudentes (<= 2.0 salvo decision explicita) para evitar sobrecosto.
+- Capas y timers: priorizar pocas entidades significativas; toda entidad con timers/listeners debe limpiar en `dispose()`.
+- Teardown central: `core/lifecycleManager` registra coordinadores/capas y expone `disposeAllLifecycle()`; futuros resets o cambios de escena deben pasar por ahi para evitar fugas y estados inconsistentes.
 
 ## Handle de escena y teardown
 - `bootstrapVerumMotus` devuelve un handle con `dispose()` pensado para rituales de reset/cambio de escena.
@@ -105,7 +115,7 @@ Se centralizan en `config/constants.js` para ajustar el pulso en un solo lugar s
 
 ## Estado y timeline ampliados
 - Se incorpora `RITMO_EMERGE` como cuarta etapa del pulso tras `DESLIZAMIENTO_INTERNO`: pulso mas presente y definido, aun contenido.
-- La timeline declarativa del Pulso queda: `INERCIA_VIVA ? PULSO_INICIAL ? DESLIZAMIENTO_INTERNO ? RITMO_EMERGE`, cada tramo con su delay configurado en `config/constants.js`.
+- La timeline declarativa del Pulso queda: `INERCIA_VIVA -> PULSO_INICIAL -> DESLIZAMIENTO_INTERNO -> RITMO_EMERGE`, cada tramo con su delay configurado en `config/constants.js`.
 
 ## API publica de la escena
 - `bootstrapVerumMotus(container)` monta la obra en el contenedor y devuelve un handle con:
