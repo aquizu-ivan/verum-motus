@@ -12,6 +12,9 @@ import {
   DESLIZAMIENTO_INTERNO_FREQUENCY_HZ,
   DESLIZAMIENTO_INTERNO_AMPLITUDE,
   DESLIZAMIENTO_INTERNO_COLOR,
+  RITMO_EMERGE_FREQUENCY_HZ,
+  RITMO_EMERGE_AMPLITUDE,
+  RITMO_EMERGE_COLOR,
 } from '../config/constants.js';
 
 export function createStateOrchestrator(stateMachine) {
@@ -31,6 +34,11 @@ export function createStateOrchestrator(stateMachine) {
       frequency: DESLIZAMIENTO_INTERNO_FREQUENCY_HZ,
       amplitude: DESLIZAMIENTO_INTERNO_AMPLITUDE,
       color: DESLIZAMIENTO_INTERNO_COLOR,
+    },
+    [INTERNAL_STATES.RITMO_EMERGE]: {
+      frequency: RITMO_EMERGE_FREQUENCY_HZ,
+      amplitude: RITMO_EMERGE_AMPLITUDE,
+      color: RITMO_EMERGE_COLOR,
     },
     // Espacios para estados futuros (p.ej. RITMO_EMERGE, etc.).
   };

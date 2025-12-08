@@ -102,3 +102,7 @@ Se centralizan en `config/constants.js` para ajustar el pulso en un solo lugar s
 ## Guardrail de pixelRatio
 - El renderer usa `setPixelRatio` clamped por `MAX_PIXEL_RATIO` para evitar resoluciones excesivas en pantallas HiDPI.
 - Es una decision consciente para preservar performance y mantener el caracter contemplativo sin introducir artefactos visuales ni ruido extra.
+
+## Estado y timeline ampliados
+- Se incorpora `RITMO_EMERGE` como cuarta etapa del pulso tras `DESLIZAMIENTO_INTERNO`: pulso mas presente y definido, aun contenido.
+- La timeline declarativa del Pulso queda: `INERCIA_VIVA ? PULSO_INICIAL ? DESLIZAMIENTO_INTERNO ? RITMO_EMERGE`, cada tramo con su delay configurado en `config/constants.js`.
