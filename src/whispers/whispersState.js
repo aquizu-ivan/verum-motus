@@ -4,11 +4,13 @@
 const triggeredPhases = new Set();
 const phaseOffsets = new Map();
 let finalTriggered = false;
+const activeWhispers = new Set();
 
 export function resetWhispersForRun() {
   triggeredPhases.clear();
   phaseOffsets.clear();
   finalTriggered = false;
+  activeWhispers.clear();
 }
 
 export function markPhaseWhisperTriggered(phaseId) {
@@ -37,4 +39,18 @@ export function markFinalWhisperTriggered() {
 
 export function hasFinalWhisperTriggered() {
   return finalTriggered;
+}
+
+export function hasActiveWhisper() {
+  return activeWhispers.size > 0;
+}
+
+export function registerActiveWhisper(whisperId) {
+  if (!whisperId) return;
+  activeWhispers.add(whisperId);
+}
+
+export function unregisterActiveWhisper(whisperId) {
+  if (!whisperId) return;
+  activeWhispers.delete(whisperId);
 }

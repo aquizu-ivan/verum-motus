@@ -6,6 +6,9 @@ import {
   FINAL_WHISPER_STATES,
   WHISPER_TIMING,
   WHISPER_FRAME,
+  WHISPER_SLOTS,
+  FINAL_WHISPER_SLOTS,
+  PHASE_TIMINGS,
 } from './whispersConfig.js';
 import {
   resetWhispersForRun,
@@ -15,14 +18,21 @@ import {
   setPhaseTriggerOffset,
   hasFinalWhisperTriggered,
   markFinalWhisperTriggered,
+  hasActiveWhisper,
+  registerActiveWhisper,
+  unregisterActiveWhisper,
 } from './whispersState.js';
 
 let activeWhispers = [];
 let whisperIdCounter = 0;
+let lastSlotId = null;
+let lastFinalSlotId = null;
 
 export function resetWhispersSystem() {
   activeWhispers = [];
   whisperIdCounter = 0;
+  lastSlotId = null;
+  lastFinalSlotId = null;
   resetWhispersForRun();
 }
 
@@ -41,92 +51,74 @@ function ensurePhaseOffset(phaseId) {
   return offset;
 }
 
-function pickBandPosition(band) {
-  const [xMin, xMax] = band.x;
-  const [yMin, yMax] = band.y;
-  return {
-    x: randomInRange(xMin, xMax),
-    y: randomInRange(yMin, yMax),
-  };
+function resolveSlotPosition(slot, viewportWidth, viewportHeight) {
+  const margin = WHISPER_FRAME.marginPx;
+  const x = Math.min(viewportWidth - margin, Math.max(margin, slot.anchorX * viewportWidth));
+  const y = Math.min(viewportHeight - margin, Math.max(margin, slot.anchorY * viewportHeight));
+  return { x, y };
 }
 
-function pickRandomWhisperPosition(viewportWidth, viewportHeight) {
-  const margin = WHISPER_FRAME.marginPx;
-  const innerWidth = viewportWidth * WHISPER_FRAME.innerExclusionRatio;
-  const innerHeight = viewportHeight * WHISPER_FRAME.innerExclusionRatio;
-  const halfInnerWidth = innerWidth / 2;
-  const halfInnerHeight = innerHeight / 2;
-  const centerX = viewportWidth / 2;
-  const centerY = viewportHeight / 2;
+function pickSlot(slots, lastIdRefSetter, lastId) {
+  if (!slots || slots.length === 0) {
+    return null;
+  }
+  const available = slots.length > 1 ? slots.filter((slot) => slot.id !== lastId) : slots;
+  const slot = available[Math.floor(Math.random() * available.length)];
+  if (typeof lastIdRefSetter === 'function') {
+    lastIdRefSetter(slot.id);
+  }
+  return slot;
+}
 
-  const bands = [
-    {
-      // Borde superior
-      x: [margin, viewportWidth - margin],
-      y: [margin, centerY - halfInnerHeight - margin],
+function pickWhisperPosition(viewportWidth, viewportHeight, { isFinal } = {}) {
+  if (isFinal) {
+    const slot = pickSlot(
+      FINAL_WHISPER_SLOTS,
+      (id) => {
+        lastFinalSlotId = id;
+      },
+      lastFinalSlotId
+    );
+    if (slot) {
+      return resolveSlotPosition(slot, viewportWidth, viewportHeight);
+    }
+  }
+  const slot = pickSlot(
+    WHISPER_SLOTS,
+    (id) => {
+      lastSlotId = id;
     },
-    {
-      // Borde inferior
-      x: [margin, viewportWidth - margin],
-      y: [centerY + halfInnerHeight + margin, viewportHeight - margin],
-    },
-    {
-      // Borde izquierdo
-      x: [margin, centerX - halfInnerWidth - margin],
-      y: [margin, viewportHeight - margin],
-    },
-    {
-      // Borde derecho
-      x: [centerX + halfInnerWidth + margin, viewportWidth - margin],
-      y: [margin, viewportHeight - margin],
-    },
-  ];
-
-  const usableBands = bands.filter((band) => {
-    const width = band.x[1] - band.x[0];
-    const height = band.y[1] - band.y[0];
-    return width > 48 && height > 32;
-  });
-
-  if (usableBands.length === 0) {
-    // Fallback defensivo: usar centro desplazado suave.
-    return {
-      x: centerX + randomInRange(-centerX * 0.25, centerX * 0.25),
-      y: centerY + randomInRange(-centerY * 0.25, centerY * 0.25),
-    };
+    lastSlotId
+  );
+  if (slot) {
+    return resolveSlotPosition(slot, viewportWidth, viewportHeight);
   }
 
-  const band = usableBands[Math.floor(Math.random() * usableBands.length)];
-  return pickBandPosition(band);
-}
-
-function pickFinalPosition(viewportWidth, viewportHeight) {
-  const baseX = viewportWidth * 0.5;
-  const spread = viewportWidth * WHISPER_FRAME.finalHorizontalSpreadRatio;
-  const y = viewportHeight * WHISPER_FRAME.finalPreferredYRatio;
+  // Fallback defensivo: mantener un punto seguro lejos del centro.
+  const centerX = viewportWidth / 2;
+  const centerY = viewportHeight / 2;
   return {
-    x: baseX + randomInRange(-spread, spread),
-    y,
+    x: centerX + randomInRange(-centerX * 0.25, centerX * 0.25),
+    y: centerY + randomInRange(viewportHeight * 0.25, viewportHeight * 0.4),
   };
 }
 
 function computeOpacity(whisper) {
-  const totalVisible =
-    whisper.fadeInMs + whisper.holdMs + whisper.fadeOutMs;
+  const totalDuration = whisper.totalDurationMs ?? whisper.fadeInMs + whisper.holdMs + whisper.fadeOutMs;
+  const maxOpacity = whisper.maxOpacity ?? 1;
   const elapsed = whisper.elapsedMs;
-
   if (elapsed <= 0) return 0;
   if (elapsed < whisper.fadeInMs) {
-    return elapsed / whisper.fadeInMs;
+    return (elapsed / whisper.fadeInMs) * maxOpacity;
   }
   if (elapsed < whisper.fadeInMs + whisper.holdMs) {
-    return 1;
+    return maxOpacity;
   }
   const fadeOutElapsed = elapsed - whisper.fadeInMs - whisper.holdMs;
   if (fadeOutElapsed < whisper.fadeOutMs) {
-    return 1 - fadeOutElapsed / whisper.fadeOutMs;
+    return (1 - fadeOutElapsed / whisper.fadeOutMs) * maxOpacity;
   }
-  if (elapsed >= totalVisible) {
+  if (elapsed >= totalDuration) {
     return 0;
   }
   return 0;
@@ -137,32 +129,57 @@ function advanceActiveWhispers(deltaTime) {
   for (const whisper of activeWhispers) {
     whisper.elapsedMs += deltaTime;
     whisper.opacity = computeOpacity(whisper);
-    const totalVisible = whisper.fadeInMs + whisper.holdMs + whisper.fadeOutMs;
-    if (whisper.elapsedMs <= totalVisible + 50) {
+    const totalDuration = whisper.totalDurationMs ?? whisper.fadeInMs + whisper.holdMs + whisper.fadeOutMs;
+    if (whisper.elapsedMs <= totalDuration + 50) {
       next.push(whisper);
+    } else {
+      unregisterActiveWhisper(whisper.id);
     }
   }
   activeWhispers = next;
 }
 
-function spawnWhisper({ text, viewportWidth, viewportHeight, isFinal }) {
-  const position = isFinal
-    ? pickFinalPosition(viewportWidth, viewportHeight)
-    : pickRandomWhisperPosition(viewportWidth, viewportHeight);
+function resolveTimings(phaseId, isFinal) {
+  if (isFinal) {
+    return {
+      fadeInMs: WHISPER_TIMING.finalFadeInMs,
+      holdMs: WHISPER_TIMING.finalHoldMs,
+      fadeOutMs: WHISPER_TIMING.finalFadeOutMs,
+    };
+  }
+  const phaseTiming = PHASE_TIMINGS[phaseId];
+  if (phaseTiming) {
+    return phaseTiming;
+  }
+  return {
+    fadeInMs: WHISPER_TIMING.fadeInMs,
+    holdMs: WHISPER_TIMING.holdMs,
+    fadeOutMs: WHISPER_TIMING.fadeOutMs,
+  };
+}
+
+function spawnWhisper({ text, viewportWidth, viewportHeight, isFinal, phaseId }) {
+  const position = pickWhisperPosition(viewportWidth, viewportHeight, { isFinal });
+  const timings = resolveTimings(phaseId, isFinal);
 
   const whisper = {
     id: `whisper-${++whisperIdCounter}`,
     text,
     position,
     isFinal: Boolean(isFinal),
-    fadeInMs: isFinal ? WHISPER_TIMING.finalFadeInMs : WHISPER_TIMING.fadeInMs,
-    holdMs: isFinal ? WHISPER_TIMING.finalHoldMs : WHISPER_TIMING.holdMs,
-    fadeOutMs: isFinal ? WHISPER_TIMING.finalFadeOutMs : WHISPER_TIMING.fadeOutMs,
+    fadeInMs: timings.fadeInMs,
+    holdMs: timings.holdMs,
+    fadeOutMs: timings.fadeOutMs,
     elapsedMs: 0,
     opacity: 0,
+    totalDurationMs:
+      timings.fadeInMs + timings.holdMs + timings.fadeOutMs,
+    maxOpacity: isFinal ? 0.8 : 0.7,
+    motionRangePx: isFinal ? 4.5 : 2.5,
   };
 
   activeWhispers.push(whisper);
+  registerActiveWhisper(whisper.id);
 }
 
 function isFinalPhase(phaseId) {
@@ -179,12 +196,13 @@ export function updateWhispers(deltaTime, context = {}) {
 
   if (phaseId && WHISPER_TEXTS[phaseId] && !hasPhaseWhisperTriggered(phaseId)) {
     const triggerOffset = ensurePhaseOffset(phaseId);
-    if (phaseElapsedMs >= triggerOffset) {
+    if (phaseElapsedMs >= triggerOffset && !hasActiveWhisper()) {
       spawnWhisper({
         text: WHISPER_TEXTS[phaseId],
         viewportWidth,
         viewportHeight,
         isFinal: false,
+        phaseId,
       });
       markPhaseWhisperTriggered(phaseId);
     }
@@ -195,13 +213,15 @@ export function updateWhispers(deltaTime, context = {}) {
     FINAL_WHISPER_TEXT &&
     phaseId &&
     isFinalPhase(phaseId) &&
-    phaseElapsedMs >= WHISPER_TIMING.finalDelayMs
+    phaseElapsedMs >= WHISPER_TIMING.finalDelayMs &&
+    !hasActiveWhisper()
   ) {
     spawnWhisper({
       text: FINAL_WHISPER_TEXT,
       viewportWidth,
       viewportHeight,
       isFinal: true,
+      phaseId,
     });
     markFinalWhisperTriggered();
   }

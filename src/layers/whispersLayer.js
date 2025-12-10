@@ -18,12 +18,16 @@ export class WhispersLayer extends BaseLayer {
     container.style.width = '100%';
     container.style.height = '100%';
     container.style.pointerEvents = 'none';
-    container.style.color = '#d6d6d6';
-    container.style.fontFamily = '"Gill Sans", "Helvetica Neue", Arial, sans-serif';
-    container.style.fontSize = '12px';
-    container.style.lineHeight = '1.5';
-    container.style.letterSpacing = '0.02em';
+    container.style.color = 'rgba(220, 220, 220, 0.7)';
+    container.style.fontFamily =
+      "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+    container.style.fontSize = '0.9rem';
+    container.style.lineHeight = '1.35';
+    container.style.letterSpacing = '0.025em';
     container.style.userSelect = 'none';
+    container.style.background = 'transparent';
+    container.style.border = 'none';
+    container.style.boxShadow = 'none';
 
     document.body.appendChild(container);
 
@@ -45,11 +49,15 @@ export class WhispersLayer extends BaseLayer {
       if (!element) {
         element = document.createElement('div');
         element.style.position = 'absolute';
-        element.style.maxWidth = '360px';
+        element.style.maxWidth = '26rem';
         element.style.textAlign = 'left';
         element.style.whiteSpace = 'pre-wrap';
-        element.style.transform = 'translate(-50%, -50%)';
-        element.style.transition = 'opacity 0.1s linear';
+        element.style.transform = 'translate3d(-50%, -50%, 0)';
+        element.style.transition = 'opacity 0.12s linear';
+        element.style.background = 'transparent';
+        element.style.border = 'none';
+        element.style.boxShadow = 'none';
+        element.style.letterSpacing = '0.028em';
         element.textContent = whisper.text;
         this.elements.set(whisper.id, element);
         this.container.appendChild(element);
@@ -57,11 +65,20 @@ export class WhispersLayer extends BaseLayer {
         element.textContent = whisper.text;
       }
 
+      const totalDuration = whisper.totalDurationMs || whisper.fadeInMs + whisper.holdMs + whisper.fadeOutMs;
+      const progress = totalDuration > 0 ? Math.min(1, Math.max(0, whisper.elapsedMs / totalDuration)) : 0;
+      const motionRange = whisper.motionRangePx ?? 8;
+      const deltaY = Math.sin(progress * Math.PI) * motionRange;
+
       element.style.left = `${whisper.position.x}px`;
       element.style.top = `${whisper.position.y}px`;
       element.style.opacity = `${Math.max(0, Math.min(1, whisper.opacity ?? 0))}`;
-      element.style.fontSize = whisper.isFinal ? '13px' : '12px';
-      element.style.color = whisper.isFinal ? '#e1e1e1' : '#cfcfcf';
+      element.style.fontSize = whisper.isFinal ? '0.95rem' : '0.9rem';
+      element.style.lineHeight = whisper.isFinal ? '1.38' : '1.35';
+        element.style.color = whisper.isFinal
+        ? 'rgba(234, 234, 234, 0.78)'
+        : 'rgba(220, 220, 220, 0.7)';
+      element.style.transform = `translate3d(-50%, -50%, 0) translateY(${deltaY.toFixed(2)}px)`;
     }
 
     // Retirar nodos que ya no estan activos
