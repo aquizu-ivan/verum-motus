@@ -1,6 +1,6 @@
 // src/layers/outerFieldLayer.js
 import { BaseLayer } from './baseLayer.js';
-import { Mesh, RingGeometry, MeshBasicMaterial, Color, DoubleSide } from 'three';
+import { Mesh, RingGeometry, MeshBasicMaterial, Color, DoubleSide, CanvasTexture } from 'three';
 import {
   INERCIA_VIVA_FREQUENCY_HZ,
   INERCIA_VIVA_AMPLITUDE,
@@ -14,6 +14,7 @@ import {
   INERCIA_VIVA_OUTER_FIELD_SCALE_MULTIPLIER,
   INERCIA_VIVA_OUTER_FIELD_OPACITY,
   INERCIA_VIVA_OUTER_FIELD_VARIATION,
+  OUTER_FIELD_BASE_COLOR,
 } from '../config/constants.js';
 import { lerp, clamp } from '../utils/interpolation.js';
 
@@ -51,17 +52,60 @@ export class OuterFieldLayer extends BaseLayer {
       outerFieldConfig?.variation ?? INERCIA_VIVA_OUTER_FIELD_VARIATION;
 
     this.darkReference = new Color(0x000000);
+    this.tintColor = new Color(OUTER_FIELD_BASE_COLOR);
+    this.gradientTexture = null;
+  }
+
+  createGradientTexture() {
+    const size = 256;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const center = size / 2;
+    const innerRadius = size * 0.3;
+    const coreRadius = size * 0.42;
+    const outerRadius = size * 0.5;
+
+    const gradient = ctx.createRadialGradient(
+      center,
+      center,
+      innerRadius,
+      center,
+      center,
+      outerRadius
+    );
+    const innerBand = innerRadius / outerRadius;
+    const midBand = coreRadius / outerRadius;
+    gradient.addColorStop(0, 'rgba(0,0,0,0)');
+    gradient.addColorStop(innerBand * 0.8, 'rgba(0,0,0,0.08)');
+    gradient.addColorStop(midBand - 0.05, 'rgba(255,255,255,0.65)');
+    gradient.addColorStop(midBand + 0.08, 'rgba(255,255,255,0.9)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+
+    const texture = new CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    texture.generateMipmaps = false;
+    return texture;
   }
 
   init(scene) {
     const innerRadius = OUTER_FIELD_BASE_RADIUS * 0.72;
     const outerRadius = OUTER_FIELD_BASE_RADIUS;
     const geometry = new RingGeometry(innerRadius, outerRadius, 96);
+    if (!this.gradientTexture) {
+      this.gradientTexture = this.createGradientTexture();
+    }
     const material = new MeshBasicMaterial({
-      color: this.currentColor,
+      color: this.tintColor.clone(),
       transparent: true,
       opacity: this.outerOpacityBase ?? OUTER_FIELD_BASE_OPACITY,
       side: DoubleSide,
+      depthWrite: false,
+      map: this.gradientTexture,
     });
     const mesh = new Mesh(geometry, material);
     mesh.position.set(0, 0, 0);
@@ -95,10 +139,10 @@ export class OuterFieldLayer extends BaseLayer {
     this.elapsedTime += deltaSeconds;
     this.outerFieldTime += deltaSeconds;
 
-    const effectiveFrequency = this.currentFrequency * 0.4;
+    const effectiveFrequency = this.currentFrequency * 0.35;
     const phase = 2 * Math.PI * effectiveFrequency * this.outerFieldTime + this.phaseOffset;
     const pulse = Math.sin(phase);
-    const effectiveAmplitude = this.currentAmplitude * 0.6;
+    const effectiveAmplitude = this.currentAmplitude * 0.55;
 
     const scaleBase = OUTER_FIELD_BASE_SCALE * this.outerScaleMultiplier;
     const scaleOffset =
@@ -112,7 +156,8 @@ export class OuterFieldLayer extends BaseLayer {
     const nextOpacity = clamp(opacityBase + opacityOffset, 0, 1);
 
     if (this.mesh.material) {
-      const dimColor = this.currentColor.clone().lerp(this.darkReference, 0.4);
+      const tinted = this.currentColor.clone().lerp(this.tintColor, 0.7);
+      const dimColor = tinted.lerp(this.darkReference, 0.25);
       this.mesh.material.color.copy(dimColor);
       this.mesh.material.opacity = nextOpacity;
     }

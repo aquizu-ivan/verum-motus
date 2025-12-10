@@ -1,6 +1,6 @@
 // src/layers/pulseHaloLayer.js
 import { BaseLayer } from './baseLayer.js';
-import { Mesh, SphereGeometry, MeshBasicMaterial, Color } from 'three';
+import { Mesh, CircleGeometry, MeshBasicMaterial, Color, CanvasTexture } from 'three';
 import {
   INERCIA_VIVA_FREQUENCY_HZ,
   INERCIA_VIVA_AMPLITUDE,
@@ -14,6 +14,7 @@ import {
   INERCIA_VIVA_HALO_SCALE_MULTIPLIER,
   INERCIA_VIVA_HALO_OPACITY,
   INERCIA_VIVA_HALO_VARIATION,
+  PULSE_HALO_BASE_COLOR,
 } from '../config/constants.js';
 import { lerp, clamp } from '../utils/interpolation.js';
 
@@ -45,14 +46,54 @@ export class PulseHaloLayer extends BaseLayer {
     this.haloScaleMultiplier = INERCIA_VIVA_HALO_SCALE_MULTIPLIER;
     this.haloOpacityBase = INERCIA_VIVA_HALO_OPACITY;
     this.haloVariationMultiplier = INERCIA_VIVA_HALO_VARIATION;
+    this.tintColor = new Color(PULSE_HALO_BASE_COLOR);
+    this.gradientTexture = null;
+  }
+
+  createGradientTexture() {
+    const size = 256;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const center = size / 2;
+    const innerRadius = size * 0.2;
+    const midRadius = size * 0.44;
+    const outerRadius = size * 0.5;
+
+    const gradient = ctx.createRadialGradient(
+      center,
+      center,
+      innerRadius,
+      center,
+      center,
+      outerRadius
+    );
+    gradient.addColorStop(0, 'rgba(255,255,255,0.12)');
+    gradient.addColorStop(midRadius / outerRadius - 0.08, 'rgba(255,255,255,0.4)');
+    gradient.addColorStop(midRadius / outerRadius + 0.02, 'rgba(255,255,255,0.92)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+
+    const texture = new CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    texture.generateMipmaps = false;
+    return texture;
   }
 
   init(scene) {
-    const geometry = new SphereGeometry(PULSE_HALO_BASE_RADIUS, 24, 24);
+    const geometry = new CircleGeometry(PULSE_HALO_BASE_RADIUS, 64);
+    if (!this.gradientTexture) {
+      this.gradientTexture = this.createGradientTexture();
+    }
     const material = new MeshBasicMaterial({
-      color: this.currentColor,
+      color: this.tintColor.clone(),
       transparent: true,
       opacity: this.haloOpacityBase ?? PULSE_HALO_BASE_OPACITY,
+      depthWrite: false,
+      map: this.gradientTexture,
     });
     const mesh = new Mesh(geometry, material);
     mesh.position.set(0, 0, 0);
@@ -98,7 +139,8 @@ export class PulseHaloLayer extends BaseLayer {
     const nextOpacity = clamp(opacityBase + opacityOffset, 0, 1);
 
     if (this.mesh.material) {
-      this.mesh.material.color.copy(this.currentColor);
+      const tinted = this.currentColor.clone().lerp(this.tintColor, 0.65);
+      this.mesh.material.color.copy(tinted);
       this.mesh.material.opacity = nextOpacity;
     }
   }

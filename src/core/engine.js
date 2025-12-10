@@ -3,6 +3,7 @@ import { Scene, PerspectiveCamera, WebGLRenderer } from 'three';
 import { now } from '../utils/time.js';
 import { InnerPulseLayer } from '../layers/innerPulseLayer.js';
 import { PulseHaloLayer } from '../layers/pulseHaloLayer.js';
+import { OuterFieldLayer } from '../layers/outerFieldLayer.js';
 import { WhispersLayer } from '../layers/whispersLayer.js';
 import { INTERNAL_STATES } from '../states/internalStates.js';
 import { createStateMachine } from '../states/stateMachine.js';
@@ -13,7 +14,7 @@ import {
   registerCoordinatorForLifecycle,
   disposeAllLifecycle,
 } from './lifecycleManager.js';
-import { MAX_PIXEL_RATIO } from '../config/constants.js';
+import { MAX_PIXEL_RATIO, OUTER_FIELD_CONFIG_BY_STATE } from '../config/constants.js';
 import {
   getActiveWhispers,
   resetWhispersSystem,
@@ -79,6 +80,13 @@ export function bootstrapVerumMotus() {
 
   const pulseConfig = stateOrchestrator.getCurrentPulseConfig();
   const haloConfig = stateOrchestrator.getCurrentHaloConfig();
+  const outerFieldConfig =
+    OUTER_FIELD_CONFIG_BY_STATE[stateMachine.getCurrentState()] ??
+    OUTER_FIELD_CONFIG_BY_STATE[INTERNAL_STATES.INERCIA_VIVA];
+
+  const outerFieldLayer = new OuterFieldLayer(pulseConfig, outerFieldConfig);
+  registerLayer(outerFieldLayer);
+  registerLayerForLifecycle(outerFieldLayer);
 
   const innerPulseLayer = new InnerPulseLayer(pulseConfig);
   registerLayer(innerPulseLayer);
@@ -94,7 +102,7 @@ export function bootstrapVerumMotus() {
   registerLayer(whispersLayer);
   registerLayerForLifecycle(whispersLayer);
 
-  const pulseTargets = [innerPulseLayer, haloLayer];
+  const pulseTargets = [innerPulseLayer, haloLayer, outerFieldLayer];
   const pulseCoordinator = createPulseStateCoordinator({
     stateMachine,
     stateOrchestrator,
