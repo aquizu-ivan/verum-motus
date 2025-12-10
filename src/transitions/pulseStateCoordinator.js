@@ -18,11 +18,16 @@ import {
   QUIETUD_TENSA_HALO_VARIATION,
   OUTER_FIELD_CONFIG_BY_STATE,
 } from '../config/constants.js';
+import {
+  scheduleMicroEventsForState,
+  clearAllMicroEventTimers,
+} from './pulseMicroEvents.js';
 
 // Coordina el estado interno con la configuracion del Pulso Interno.
 // Escucha la stateMachine, consulta el orquestador y aplica la config a todos los targets de pulso.
 export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, pulseTargets }) {
   let activeTransitionTimerId = null;
+  const microEventTimers = [];
   const pulseOverrides = {
     [INTERNAL_STATES.DISTORSION_APERTURA]: {
       frequency: DISTORSION_APERTURA_FREQUENCY_HZ,
@@ -78,17 +83,44 @@ export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, p
     const pulseConfig = resolvePulseConfig(nextState);
     const haloConfig = resolveHaloConfig(nextState);
     const outerFieldConfig = resolveOuterFieldConfig(nextState);
-    pulseTargets.forEach((target) => {
-      if (target && typeof target.applyPulseConfig === 'function') {
-        target.applyPulseConfig(pulseConfig);
-      }
-      if (target && typeof target.applyHaloConfig === 'function') {
-        target.applyHaloConfig(haloConfig);
-      }
-      if (target && typeof target.applyOuterFieldConfig === 'function') {
-        target.applyOuterFieldConfig(outerFieldConfig);
-      }
-    });
+
+    const applyConfigs = (configs) => {
+      const {
+        pulseConfig: nextPulse = pulseConfig,
+        haloConfig: nextHalo = haloConfig,
+        fieldConfig: nextField = outerFieldConfig,
+      } = configs || {};
+      pulseTargets.forEach((target) => {
+        if (target && typeof target.applyPulseConfig === 'function') {
+          target.applyPulseConfig(nextPulse);
+        }
+        if (target && typeof target.applyHaloConfig === 'function') {
+          target.applyHaloConfig(nextHalo);
+        }
+        if (target && typeof target.applyOuterFieldConfig === 'function') {
+          target.applyOuterFieldConfig(nextField);
+        }
+      });
+    };
+
+    applyConfigs({ pulseConfig, haloConfig, fieldConfig: outerFieldConfig });
+
+    clearAllMicroEventTimers(microEventTimers);
+    const baseConfigs = {
+      pulseConfig,
+      haloConfig,
+      fieldConfig: outerFieldConfig,
+    };
+
+    scheduleMicroEventsForState(
+      nextState,
+      baseConfigs,
+      {
+        applyOverride: (overrideConfigs) => applyConfigs(overrideConfigs),
+        restoreBase: () => applyConfigs(baseConfigs),
+      },
+      microEventTimers
+    );
 
     scheduleNextFrom(nextState);
   }
@@ -100,6 +132,7 @@ export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, p
   return {
     dispose() {
       unsubscribe();
+      clearAllMicroEventTimers(microEventTimers);
       if (activeTransitionTimerId) {
         clearTimeout(activeTransitionTimerId);
       }

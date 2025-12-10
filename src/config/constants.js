@@ -149,3 +149,40 @@ export const OUTER_FIELD_CONFIG_BY_STATE = {
   },
 };
 
+// Microeventos raros por estado (1-3 gestos suaves por ciclo)
+export const MICROEVENTS_CONFIG_BY_STATE = {
+  [INTERNAL_STATES.RITMO_EMERGE]: {
+    maxEventsPerCycle: 2,
+    minOffsetMs: 2500,
+    maxOffsetMs: 6500,
+    eventDurationMs: 2200,
+    pulseAmpDelta: 0.012,
+    pulseFreqDelta: 0.02,
+    haloOpacityDelta: 0.04,
+    haloScaleDelta: 0.06,
+    fieldVariationDelta: 0.06,
+  },
+  [INTERNAL_STATES.DISTORSION_APERTURA]: {
+    maxEventsPerCycle: 2,
+    minOffsetMs: 1500,
+    maxOffsetMs: 7200,
+    eventDurationMs: 2600,
+    pulseAmpDelta: 0.016,
+    pulseFreqDelta: 0.028,
+    haloOpacityDelta: 0.06,
+    haloScaleDelta: 0.08,
+    fieldVariationDelta: 0.08,
+  },
+  [INTERNAL_STATES.QUIETUD_TENSA]: {
+    maxEventsPerCycle: 1,
+    minOffsetMs: 2000,
+    maxOffsetMs: 5200,
+    eventDurationMs: 1800,
+    pulseAmpDelta: 0.006,
+    pulseFreqDelta: -0.012,
+    haloOpacityDelta: 0.025,
+    haloScaleDelta: 0.04,
+    fieldVariationDelta: 0.04,
+  },
+};
+
