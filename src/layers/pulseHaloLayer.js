@@ -1,6 +1,6 @@
 // src/layers/pulseHaloLayer.js
 import { BaseLayer } from './baseLayer.js';
-import { Mesh, SphereGeometry, MeshBasicMaterial, Color, CanvasTexture } from 'three';
+import { Mesh, CircleGeometry, MeshBasicMaterial, Color, CanvasTexture } from 'three';
 import {
   INERCIA_VIVA_FREQUENCY_HZ,
   INERCIA_VIVA_AMPLITUDE,
@@ -84,7 +84,7 @@ export class PulseHaloLayer extends BaseLayer {
   }
 
   init(scene) {
-    const geometry = new SphereGeometry(PULSE_HALO_BASE_RADIUS, 32, 32);
+    const geometry = new CircleGeometry(PULSE_HALO_BASE_RADIUS, 64);
     if (!this.gradientTexture) {
       this.gradientTexture = this.createGradientTexture();
     }

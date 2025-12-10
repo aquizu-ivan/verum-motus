@@ -38,32 +38,30 @@ export const WHISPER_TIMING = {
 };
 
 export const WHISPER_FRAME = {
-  marginPx: 36, // margen mínimo respecto a los bordes externos
-  innerExclusionRatio: 0.62, // rectángulo central a excluir respecto a ancho/alto (ligeramente más compacto para orbitar cerca)
-  finalPreferredYRatio: 0.82, // altura relativa preferida para el susurro final
-  finalHorizontalSpreadRatio: 0.14, // dispersión horizontal (porcentaje) para el final
+  marginPx: 44, // margen mínimo respecto a los bordes externos
+  innerExclusionRatio: 0.72, // rectángulo central a excluir respecto a ancho/alto (ligeramente más compacto para orbitar cerca)
+  finalPreferredYRatio: 0.88, // altura relativa preferida para el susurro final
+  finalHorizontalSpreadRatio: 0.18, // dispersión horizontal (porcentaje) para el final
 };
 
 // Slots rituales: anchors relativos al viewport (0-1). Orbitan el núcleo en un anillo cercano, sin tocarlo ni ir al borde.
 export const WHISPER_SLOTS = [
-  { id: "low-left-outer", anchorX: 0.34, anchorY: 0.82 },
-  { id: "low-right-outer", anchorX: 0.66, anchorY: 0.83 },
-  { id: "low-center-outer", anchorX: 0.5, anchorY: 0.85 },
-  { id: "lower-mid-left-outer", anchorX: 0.32, anchorY: 0.74 },
-  { id: "lower-mid-right-outer", anchorX: 0.68, anchorY: 0.75 },
-  { id: "mid-left-outer", anchorX: 0.24, anchorY: 0.6 },
-  { id: "mid-right-outer", anchorX: 0.76, anchorY: 0.6 },
-  { id: "upper-left-outer", anchorX: 0.24, anchorY: 0.42 },
-  { id: "upper-right-outer", anchorX: 0.76, anchorY: 0.43 },
+  { id: "low-left-outer", anchorX: 0.3, anchorY: 0.88 },
+  { id: "low-right-outer", anchorX: 0.7, anchorY: 0.89 },
+  { id: "low-center-outer", anchorX: 0.5, anchorY: 0.92 },
+  { id: "lower-mid-left-outer", anchorX: 0.34, anchorY: 0.82 },
+  { id: "lower-mid-right-outer", anchorX: 0.66, anchorY: 0.83 },
+  { id: "mid-left-outer", anchorX: 0.24, anchorY: 0.76 },
+  { id: "mid-right-outer", anchorX: 0.76, anchorY: 0.76 },
 ];
 
 // Slots preferidos para el susurro final (nobles, cercanos al centro-bajo/laterales medios).
 export const FINAL_WHISPER_SLOTS = [
-  { id: "final-low-center-outer", anchorX: 0.5, anchorY: 0.88 },
-  { id: "final-low-left-outer", anchorX: 0.44, anchorY: 0.86 },
-  { id: "final-low-right-outer", anchorX: 0.56, anchorY: 0.86 },
-  { id: "final-mid-left-outer", anchorX: 0.4, anchorY: 0.74 },
-  { id: "final-mid-right-outer", anchorX: 0.6, anchorY: 0.74 },
+  { id: "final-low-center-outer", anchorX: 0.5, anchorY: 0.94 },
+  { id: "final-low-left-outer", anchorX: 0.42, anchorY: 0.92 },
+  { id: "final-low-right-outer", anchorX: 0.58, anchorY: 0.92 },
+  { id: "final-mid-left-outer", anchorX: 0.36, anchorY: 0.84 },
+  { id: "final-mid-right-outer", anchorX: 0.64, anchorY: 0.84 },
 ];
 
 // Timings diferenciados por fase (ajustan fades/hold respecto a base).
@@ -75,6 +73,8 @@ export const PHASE_TIMINGS = {
   [INTERNAL_STATES.DISTORSION_APERTURA]: { fadeInMs: 1300, holdMs: 5600, fadeOutMs: 1900 },
   [INTERNAL_STATES.QUIETUD_TENSA]: { fadeInMs: 1400, holdMs: 6000, fadeOutMs: 2000 },
 };
+
+
 
 
 
