@@ -3,6 +3,7 @@ import { Scene, PerspectiveCamera, WebGLRenderer } from 'three';
 import { now } from '../utils/time.js';
 import { InnerPulseLayer } from '../layers/innerPulseLayer.js';
 import { PulseHaloLayer } from '../layers/pulseHaloLayer.js';
+import { WhispersLayer } from '../layers/whispersLayer.js';
 import { INTERNAL_STATES } from '../states/internalStates.js';
 import { createStateMachine } from '../states/stateMachine.js';
 import { createStateOrchestrator } from '../states/stateOrchestrator.js';
@@ -13,6 +14,11 @@ import {
   disposeAllLifecycle,
 } from './lifecycleManager.js';
 import { MAX_PIXEL_RATIO } from '../config/constants.js';
+import {
+  getActiveWhispers,
+  resetWhispersSystem,
+  updateWhispers,
+} from '../whispers/whispersSystem.js';
 
 export function bootstrapVerumMotus() {
   // Escena base silenciosa; luego se conectaran capas y estados.
@@ -27,14 +33,14 @@ export function bootstrapVerumMotus() {
 
   const scene = new Scene();
 
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  let viewportWidth = window.innerWidth;
+  let viewportHeight = window.innerHeight;
 
-  const camera = new PerspectiveCamera(45, width / height, 0.1, 100);
+  const camera = new PerspectiveCamera(45, viewportWidth / viewportHeight, 0.1, 100);
   camera.position.z = 5;
 
   const renderer = new WebGLRenderer({ antialias: true });
-  renderer.setSize(width, height);
+  renderer.setSize(viewportWidth, viewportHeight);
   const devicePixelRatio = window.devicePixelRatio || 1;
   const pixelRatio = Math.min(devicePixelRatio, MAX_PIXEL_RATIO);
   renderer.setPixelRatio(pixelRatio);
@@ -48,6 +54,17 @@ export function bootstrapVerumMotus() {
 
   const stateOrchestrator = createStateOrchestrator(stateMachine);
   // El orquestador expone configuraciones derivadas del estado (p.ej. Pulso Interno); se conectara en bloques siguientes.
+
+  let currentInternalState = stateMachine.getCurrentState();
+  let phaseElapsedMs = 0;
+  const unsubscribeInternalState = stateMachine.subscribe((prevState, nextState) => {
+    if (prevState !== nextState) {
+      phaseElapsedMs = 0;
+      currentInternalState = nextState;
+    }
+  });
+
+  resetWhispersSystem();
 
   appElement.innerHTML = '';
   appElement.appendChild(renderer.domElement);
@@ -71,6 +88,12 @@ export function bootstrapVerumMotus() {
   registerLayer(haloLayer);
   registerLayerForLifecycle(haloLayer);
 
+  const whispersLayer = new WhispersLayer({
+    getActiveWhispers,
+  });
+  registerLayer(whispersLayer);
+  registerLayerForLifecycle(whispersLayer);
+
   const pulseTargets = [innerPulseLayer, haloLayer];
   const pulseCoordinator = createPulseStateCoordinator({
     stateMachine,
@@ -90,6 +113,14 @@ export function bootstrapVerumMotus() {
     const currentTime = now();
     const deltaTime = currentTime - lastTime; // deltaTime en milisegundos; usar deltaTime / 1000 para segundos.
     lastTime = currentTime;
+    phaseElapsedMs += deltaTime;
+
+    updateWhispers(deltaTime, {
+      phaseId: currentInternalState,
+      phaseElapsedMs,
+      viewportWidth,
+      viewportHeight,
+    });
 
     for (const layer of layers) {
       if (typeof layer.update === 'function') {
@@ -103,16 +134,16 @@ export function bootstrapVerumMotus() {
   animationFrameId = requestAnimationFrame(animate);
 
   function handleResize() {
-    const newWidth = window.innerWidth;
-    const newHeight = window.innerHeight;
+    viewportWidth = window.innerWidth;
+    viewportHeight = window.innerHeight;
 
-    camera.aspect = newWidth / newHeight;
+    camera.aspect = viewportWidth / viewportHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(newWidth, newHeight);
+    renderer.setSize(viewportWidth, viewportHeight);
 
     for (const layer of layers) {
       if (typeof layer.onResize === 'function') {
-        layer.onResize(newWidth, newHeight);
+        layer.onResize(viewportWidth, viewportHeight);
       }
     }
   }
@@ -129,6 +160,9 @@ export function bootstrapVerumMotus() {
       if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
+      }
+      if (unsubscribeInternalState) {
+        unsubscribeInternalState();
       }
       window.removeEventListener('resize', handleResize);
       disposeAllLifecycle();
