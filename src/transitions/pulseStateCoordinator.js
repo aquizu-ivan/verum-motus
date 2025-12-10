@@ -16,6 +16,7 @@ import {
   QUIETUD_TENSA_HALO_SCALE_MULTIPLIER,
   QUIETUD_TENSA_HALO_OPACITY,
   QUIETUD_TENSA_HALO_VARIATION,
+  OUTER_FIELD_CONFIG_BY_STATE,
 } from '../config/constants.js';
 
 // Coordina el estado interno con la configuracion del Pulso Interno.
@@ -69,15 +70,23 @@ export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, p
     return haloOverrides[state] ?? stateOrchestrator.getCurrentHaloConfig();
   }
 
+  function resolveOuterFieldConfig(state) {
+    return OUTER_FIELD_CONFIG_BY_STATE[state];
+  }
+
   function handleStateChange(prevState, nextState) {
     const pulseConfig = resolvePulseConfig(nextState);
     const haloConfig = resolveHaloConfig(nextState);
+    const outerFieldConfig = resolveOuterFieldConfig(nextState);
     pulseTargets.forEach((target) => {
       if (target && typeof target.applyPulseConfig === 'function') {
         target.applyPulseConfig(pulseConfig);
       }
       if (target && typeof target.applyHaloConfig === 'function') {
         target.applyHaloConfig(haloConfig);
+      }
+      if (target && typeof target.applyOuterFieldConfig === 'function') {
+        target.applyOuterFieldConfig(outerFieldConfig);
       }
     });
 
