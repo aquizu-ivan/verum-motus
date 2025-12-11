@@ -1,36 +1,28 @@
 // src/whispers/whispersState.js
 // Estado interno del sistema de susurros para un pase de Verum Motus.
 
-const triggeredPhases = new Set();
-const phaseOffsets = new Map();
+const triggeredPhaseWindows = new Map();
 let finalTriggered = false;
 const activeWhispers = new Set();
 
 export function resetWhispersForRun() {
-  triggeredPhases.clear();
-  phaseOffsets.clear();
+  triggeredPhaseWindows.clear();
   finalTriggered = false;
   activeWhispers.clear();
 }
 
-export function markPhaseWhisperTriggered(phaseId) {
-  if (!phaseId) return;
-  triggeredPhases.add(phaseId);
+export function markPhaseWindowTriggered(phaseId, windowIndex) {
+  if (!phaseId || typeof windowIndex !== 'number') return;
+  const entry = triggeredPhaseWindows.get(phaseId) ?? new Set();
+  entry.add(windowIndex);
+  triggeredPhaseWindows.set(phaseId, entry);
 }
 
-export function hasPhaseWhisperTriggered(phaseId) {
-  if (!phaseId) return false;
-  return triggeredPhases.has(phaseId);
-}
-
-export function setPhaseTriggerOffset(phaseId, offsetMs) {
-  if (!phaseId || typeof offsetMs !== 'number') return;
-  phaseOffsets.set(phaseId, offsetMs);
-}
-
-export function getPhaseTriggerOffset(phaseId) {
-  if (!phaseId) return undefined;
-  return phaseOffsets.get(phaseId);
+export function hasPhaseWindowTriggered(phaseId, windowIndex) {
+  if (!phaseId || typeof windowIndex !== 'number') return false;
+  const entry = triggeredPhaseWindows.get(phaseId);
+  if (!entry) return false;
+  return entry.has(windowIndex);
 }
 
 export function markFinalWhisperTriggered() {

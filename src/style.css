@@ -25,6 +25,32 @@ canvas {
   height: 100%;
 }
 
+:root {
+  --whisper-nacar: #f5f2ea;
+  --whisper-dorado: #f2c46a;
+  --whisper-shadow: rgba(0, 0, 0, 0.65);
+}
+
+.whisper-text {
+  color: var(--whisper-nacar);
+  opacity: 0.78;
+  letter-spacing: 0.02em;
+  -webkit-font-smoothing: antialiased;
+  white-space: nowrap;
+  font-size: clamp(0.8rem, 1.2vw, 1rem);
+  text-shadow:
+    0 0 10px rgba(0, 0, 0, 0.7),
+    0 0 22px rgba(0, 0, 0, 0.85);
+}
+
+.whisper-text--pearled {
+  filter: blur(0.3px);
+}
+
+.whisper-text--final {
+  /* hook semantico; sin estilos diferenciales */
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

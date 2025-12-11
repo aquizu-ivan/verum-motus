@@ -15,6 +15,7 @@ import {
   INERCIA_VIVA_HALO_OPACITY,
   INERCIA_VIVA_HALO_VARIATION,
   PULSE_HALO_BASE_COLOR,
+  GOLDEN_TINT_COLOR,
 } from '../config/constants.js';
 import { lerp, clamp } from '../utils/interpolation.js';
 
@@ -48,6 +49,8 @@ export class PulseHaloLayer extends BaseLayer {
     this.haloVariationMultiplier = INERCIA_VIVA_HALO_VARIATION;
     this.tintColor = new Color(PULSE_HALO_BASE_COLOR);
     this.gradientTexture = null;
+    this.goldenTintColor = new Color(GOLDEN_TINT_COLOR);
+    this.goldenTintStrength = 0;
   }
 
   createGradientTexture() {
@@ -140,8 +143,12 @@ export class PulseHaloLayer extends BaseLayer {
 
     if (this.mesh.material) {
       const tinted = this.currentColor.clone().lerp(this.tintColor, 0.65);
+      if (this.goldenTintStrength > 0) {
+        tinted.lerp(this.goldenTintColor, clamp(this.goldenTintStrength, 0, 0.4));
+      }
+      const opacityBoost = clamp(this.goldenTintStrength * 0.12, 0, 0.18);
       this.mesh.material.color.copy(tinted);
-      this.mesh.material.opacity = nextOpacity;
+      this.mesh.material.opacity = clamp(nextOpacity + opacityBoost, 0, 1);
     }
   }
 
@@ -173,6 +180,13 @@ export class PulseHaloLayer extends BaseLayer {
     this.haloScaleMultiplier = haloConfig.scaleMultiplier ?? this.haloScaleMultiplier;
     this.haloOpacityBase = haloConfig.opacity ?? this.haloOpacityBase;
     this.haloVariationMultiplier = haloConfig.variation ?? this.haloVariationMultiplier;
+  }
+
+  setGoldenTint({ color = GOLDEN_TINT_COLOR, strength = 0 } = {}) {
+    if (color) {
+      this.goldenTintColor.set(color);
+    }
+    this.goldenTintStrength = clamp(strength, 0, 0.35);
   }
 
   onResize(/* width, height */) {

@@ -58,6 +58,10 @@ export class WhispersLayer extends BaseLayer {
         element.style.border = 'none';
         element.style.boxShadow = 'none';
         element.style.letterSpacing = '0.028em';
+        element.className = 'whisper-text whisper-text--pearled';
+        if (whisper.isFinal) {
+          element.className = `${element.className} whisper-text--final`;
+        }
         element.textContent = whisper.text;
         this.elements.set(whisper.id, element);
         this.container.appendChild(element);
@@ -75,9 +79,9 @@ export class WhispersLayer extends BaseLayer {
       element.style.opacity = `${Math.max(0, Math.min(1, whisper.opacity ?? 0))}`;
       element.style.fontSize = whisper.isFinal ? '0.95rem' : '0.9rem';
       element.style.lineHeight = whisper.isFinal ? '1.38' : '1.35';
-        element.style.color = whisper.isFinal
-        ? 'rgba(234, 234, 234, 0.78)'
-        : 'rgba(220, 220, 220, 0.7)';
+      element.className = whisper.isFinal
+        ? 'whisper-text whisper-text--pearled whisper-text--final'
+        : 'whisper-text whisper-text--pearled';
       element.style.transform = `translate3d(-50%, -50%, 0) translateY(${deltaY.toFixed(2)}px)`;
     }
 
