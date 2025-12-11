@@ -22,6 +22,7 @@ import {
   GOLDEN_TINT_STRENGTH,
   GOLDEN_INTENSITY_MIN,
   GOLDEN_INTENSITY_MAX,
+  GOLDEN_INTENSITY_MIN_FINAL,
   PULSE_AMPLITUDE_MIN,
   PULSE_AMPLITUDE_MAX,
 } from '../config/constants.js';
@@ -35,6 +36,7 @@ import {
 export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, pulseTargets }) {
   let activeTransitionTimerId = null;
   const microEventTimers = [];
+  let goldenAwakened = false;
   const pulseOverrides = {
     [INTERNAL_STATES.DISTORSION_APERTURA]: {
       frequency: DISTORSION_APERTURA_FREQUENCY_HZ,
@@ -92,6 +94,9 @@ export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, p
     const outerFieldConfig = resolveOuterFieldConfig(nextState);
 
     const isConsciousnessPhase = CONSCIOUSNESS_PHASES.includes(nextState);
+    if (isConsciousnessPhase && !goldenAwakened) {
+      goldenAwakened = true;
+    }
 
     const normalizeAmplitude = (value) => {
       const min = PULSE_AMPLITUDE_MIN ?? 0;
@@ -103,10 +108,15 @@ export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, p
     };
 
     const computeGoldenStrength = (configs) => {
-      if (!isConsciousnessPhase) return 0;
+      const hasPhaseFactor = isConsciousnessPhase || goldenAwakened;
+      if (!hasPhaseFactor) return 0;
       const amp = configs?.pulseConfig?.amplitude ?? pulseConfig?.amplitude ?? 0;
       const eased = normalizeAmplitude(amp);
-      const min = GOLDEN_INTENSITY_MIN ?? 0;
+      let min = GOLDEN_INTENSITY_MIN ?? 0;
+      const isFinalStablePhase = nextState === INTERNAL_STATES.QUIETUD_TENSA;
+      if (isFinalStablePhase && typeof GOLDEN_INTENSITY_MIN_FINAL === 'number') {
+        min = Math.max(min, GOLDEN_INTENSITY_MIN_FINAL);
+      }
       const max = GOLDEN_INTENSITY_MAX ?? GOLDEN_TINT_STRENGTH ?? 0.2;
       return min + eased * Math.max(0, max - min);
     };
