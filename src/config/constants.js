@@ -204,3 +204,9 @@ export const CONSCIOUSNESS_PHASES = [
 
 export const GOLDEN_TINT_COLOR = 0xe2b15b;
 export const GOLDEN_TINT_STRENGTH = 0.18;
+export const GOLDEN_INTENSITY_MIN = 0.05;
+export const GOLDEN_INTENSITY_MAX = 0.4;
+
+// Rango esperado de amplitud del pulso (usado para normalizar intensidad dorada)
+export const PULSE_AMPLITUDE_MIN = INERCIA_VIVA_AMPLITUDE;
+export const PULSE_AMPLITUDE_MAX = DISTORSION_APERTURA_AMPLITUDE + 0.02;

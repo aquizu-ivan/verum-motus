@@ -20,6 +20,10 @@ import {
   CONSCIOUSNESS_PHASES,
   GOLDEN_TINT_COLOR,
   GOLDEN_TINT_STRENGTH,
+  GOLDEN_INTENSITY_MIN,
+  GOLDEN_INTENSITY_MAX,
+  PULSE_AMPLITUDE_MIN,
+  PULSE_AMPLITUDE_MAX,
 } from '../config/constants.js';
 import {
   scheduleMicroEventsForState,
@@ -86,8 +90,26 @@ export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, p
     const pulseConfig = resolvePulseConfig(nextState);
     const haloConfig = resolveHaloConfig(nextState);
     const outerFieldConfig = resolveOuterFieldConfig(nextState);
+
     const isConsciousnessPhase = CONSCIOUSNESS_PHASES.includes(nextState);
-    const goldenTintStrength = isConsciousnessPhase ? GOLDEN_TINT_STRENGTH : 0;
+
+    const normalizeAmplitude = (value) => {
+      const min = PULSE_AMPLITUDE_MIN ?? 0;
+      const max = PULSE_AMPLITUDE_MAX ?? 1;
+      const span = Math.max(0.0001, max - min);
+      const clamped = Math.max(0, Math.min(1, (value - min) / span));
+      // Easing suave para evitar saltos bruscos
+      return clamped * clamped;
+    };
+
+    const computeGoldenStrength = (configs) => {
+      if (!isConsciousnessPhase) return 0;
+      const amp = configs?.pulseConfig?.amplitude ?? pulseConfig?.amplitude ?? 0;
+      const eased = normalizeAmplitude(amp);
+      const min = GOLDEN_INTENSITY_MIN ?? 0;
+      const max = GOLDEN_INTENSITY_MAX ?? GOLDEN_TINT_STRENGTH ?? 0.2;
+      return min + eased * Math.max(0, max - min);
+    };
 
     const applyConfigs = (configs) => {
       const {
@@ -95,6 +117,7 @@ export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, p
         haloConfig: nextHalo = haloConfig,
         fieldConfig: nextField = outerFieldConfig,
       } = configs || {};
+      const goldenStrength = computeGoldenStrength({ pulseConfig: nextPulse });
       pulseTargets.forEach((target) => {
         if (target && typeof target.applyPulseConfig === 'function') {
           target.applyPulseConfig(nextPulse);
@@ -108,7 +131,7 @@ export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, p
         if (target && typeof target.setGoldenTint === 'function') {
           target.setGoldenTint({
             color: GOLDEN_TINT_COLOR,
-            strength: goldenTintStrength,
+            strength: goldenStrength,
           });
         }
       });
