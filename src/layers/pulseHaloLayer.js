@@ -16,6 +16,7 @@ import {
   INERCIA_VIVA_HALO_VARIATION,
   PULSE_HALO_BASE_COLOR,
   GOLDEN_TINT_COLOR,
+  GOLDEN_INTENSITY_MAX,
 } from '../config/constants.js';
 import { lerp, clamp } from '../utils/interpolation.js';
 
@@ -143,10 +144,11 @@ export class PulseHaloLayer extends BaseLayer {
 
     if (this.mesh.material) {
       const tinted = this.currentColor.clone().lerp(this.tintColor, 0.65);
-      if (this.goldenTintStrength > 0) {
-        tinted.lerp(this.goldenTintColor, clamp(this.goldenTintStrength, 0, 0.4));
+      const strength = clamp(this.goldenTintStrength, 0, GOLDEN_INTENSITY_MAX ?? 0.4);
+      if (strength > 0) {
+        tinted.lerp(this.goldenTintColor, strength);
       }
-      const opacityBoost = clamp(this.goldenTintStrength * 0.12, 0, 0.18);
+      const opacityBoost = clamp(strength * 0.12, 0, 0.18);
       this.mesh.material.color.copy(tinted);
       this.mesh.material.opacity = clamp(nextOpacity + opacityBoost, 0, 1);
     }
@@ -186,7 +188,7 @@ export class PulseHaloLayer extends BaseLayer {
     if (color) {
       this.goldenTintColor.set(color);
     }
-    this.goldenTintStrength = clamp(strength, 0, 0.35);
+    this.goldenTintStrength = clamp(strength, 0, GOLDEN_INTENSITY_MAX ?? 0.4);
   }
 
   onResize(/* width, height */) {

@@ -12,7 +12,8 @@ export class WhispersLayer extends BaseLayer {
 
   init() {
     const container = document.createElement('div');
-    container.style.position = 'fixed';
+    container.className = 'whispers-overlay';
+    container.style.position = 'absolute';
     container.style.left = '0';
     container.style.top = '0';
     container.style.width = '100%';
@@ -29,7 +30,12 @@ export class WhispersLayer extends BaseLayer {
     container.style.border = 'none';
     container.style.boxShadow = 'none';
 
-    document.body.appendChild(container);
+    const root = document.getElementById('verum-root');
+    if (root) {
+      root.appendChild(container);
+    } else {
+      document.body.appendChild(container);
+    }
 
     this.container = container;
   }

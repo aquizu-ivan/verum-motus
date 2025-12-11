@@ -16,6 +16,7 @@ import {
   INERCIA_VIVA_OUTER_FIELD_VARIATION,
   OUTER_FIELD_BASE_COLOR,
   GOLDEN_TINT_COLOR,
+  GOLDEN_INTENSITY_MAX,
 } from '../config/constants.js';
 import { lerp, clamp } from '../utils/interpolation.js';
 
@@ -160,11 +161,12 @@ export class OuterFieldLayer extends BaseLayer {
 
     if (this.mesh.material) {
       const tinted = this.currentColor.clone().lerp(this.tintColor, 0.7);
-      if (this.goldenTintStrength > 0) {
-        tinted.lerp(this.goldenTintColor, clamp(this.goldenTintStrength, 0, 0.4));
+      const strength = clamp(this.goldenTintStrength, 0, GOLDEN_INTENSITY_MAX ?? 0.4);
+      if (strength > 0) {
+        tinted.lerp(this.goldenTintColor, strength);
       }
       const dimColor = tinted.lerp(this.darkReference, 0.25);
-      const opacityBoost = clamp(this.goldenTintStrength * 0.12, 0, 0.18);
+      const opacityBoost = clamp(strength * 0.12, 0, 0.18);
       this.mesh.material.color.copy(dimColor);
       this.mesh.material.opacity = clamp(nextOpacity + opacityBoost, 0, 1);
     }
@@ -205,7 +207,7 @@ export class OuterFieldLayer extends BaseLayer {
     if (color) {
       this.goldenTintColor.set(color);
     }
-    this.goldenTintStrength = clamp(strength, 0, 0.35);
+    this.goldenTintStrength = clamp(strength, 0, GOLDEN_INTENSITY_MAX ?? 0.4);
   }
 
   onResize(/* width, height */) {
