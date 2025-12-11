@@ -15,6 +15,7 @@ import {
   INERCIA_VIVA_OUTER_FIELD_OPACITY,
   INERCIA_VIVA_OUTER_FIELD_VARIATION,
   OUTER_FIELD_BASE_COLOR,
+  GOLDEN_TINT_COLOR,
 } from '../config/constants.js';
 import { lerp, clamp } from '../utils/interpolation.js';
 
@@ -54,6 +55,8 @@ export class OuterFieldLayer extends BaseLayer {
     this.darkReference = new Color(0x000000);
     this.tintColor = new Color(OUTER_FIELD_BASE_COLOR);
     this.gradientTexture = null;
+    this.goldenTintColor = new Color(GOLDEN_TINT_COLOR);
+    this.goldenTintStrength = 0;
   }
 
   createGradientTexture() {
@@ -157,9 +160,13 @@ export class OuterFieldLayer extends BaseLayer {
 
     if (this.mesh.material) {
       const tinted = this.currentColor.clone().lerp(this.tintColor, 0.7);
+      if (this.goldenTintStrength > 0) {
+        tinted.lerp(this.goldenTintColor, clamp(this.goldenTintStrength, 0, 0.4));
+      }
       const dimColor = tinted.lerp(this.darkReference, 0.25);
+      const opacityBoost = clamp(this.goldenTintStrength * 0.12, 0, 0.18);
       this.mesh.material.color.copy(dimColor);
-      this.mesh.material.opacity = nextOpacity;
+      this.mesh.material.opacity = clamp(nextOpacity + opacityBoost, 0, 1);
     }
   }
 
@@ -192,6 +199,13 @@ export class OuterFieldLayer extends BaseLayer {
     this.outerOpacityBase = outerFieldConfig.opacity ?? this.outerOpacityBase;
     this.outerVariationMultiplier =
       outerFieldConfig.variation ?? this.outerVariationMultiplier;
+  }
+
+  setGoldenTint({ color = GOLDEN_TINT_COLOR, strength = 0 } = {}) {
+    if (color) {
+      this.goldenTintColor.set(color);
+    }
+    this.goldenTintStrength = clamp(strength, 0, 0.35);
   }
 
   onResize(/* width, height */) {

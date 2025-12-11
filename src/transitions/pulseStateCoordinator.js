@@ -17,6 +17,9 @@ import {
   QUIETUD_TENSA_HALO_OPACITY,
   QUIETUD_TENSA_HALO_VARIATION,
   OUTER_FIELD_CONFIG_BY_STATE,
+  CONSCIOUSNESS_PHASES,
+  GOLDEN_TINT_COLOR,
+  GOLDEN_TINT_STRENGTH,
 } from '../config/constants.js';
 import {
   scheduleMicroEventsForState,
@@ -83,6 +86,8 @@ export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, p
     const pulseConfig = resolvePulseConfig(nextState);
     const haloConfig = resolveHaloConfig(nextState);
     const outerFieldConfig = resolveOuterFieldConfig(nextState);
+    const isConsciousnessPhase = CONSCIOUSNESS_PHASES.includes(nextState);
+    const goldenTintStrength = isConsciousnessPhase ? GOLDEN_TINT_STRENGTH : 0;
 
     const applyConfigs = (configs) => {
       const {
@@ -99,6 +104,12 @@ export function createPulseStateCoordinator({ stateMachine, stateOrchestrator, p
         }
         if (target && typeof target.applyOuterFieldConfig === 'function') {
           target.applyOuterFieldConfig(nextField);
+        }
+        if (target && typeof target.setGoldenTint === 'function') {
+          target.setGoldenTint({
+            color: GOLDEN_TINT_COLOR,
+            strength: goldenTintStrength,
+          });
         }
       });
     };

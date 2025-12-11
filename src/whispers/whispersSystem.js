@@ -9,16 +9,16 @@ import {
   WHISPER_SLOTS,
   FINAL_WHISPER_SLOTS,
   PHASE_TIMINGS,
+  WHISPER_PHASE_WINDOWS,
 } from './whispersConfig.js';
+import { PHASE_DURATION_MS } from '../config/constants.js';
 import {
   resetWhispersForRun,
-  hasPhaseWhisperTriggered,
-  markPhaseWhisperTriggered,
-  getPhaseTriggerOffset,
-  setPhaseTriggerOffset,
   hasFinalWhisperTriggered,
   markFinalWhisperTriggered,
   hasActiveWhisper,
+  hasPhaseWindowTriggered,
+  markPhaseWindowTriggered,
   registerActiveWhisper,
   unregisterActiveWhisper,
 } from './whispersState.js';
@@ -27,28 +27,19 @@ let activeWhispers = [];
 let whisperIdCounter = 0;
 let lastSlotId = null;
 let lastFinalSlotId = null;
+let cooldownMs = 0;
 
 export function resetWhispersSystem() {
   activeWhispers = [];
   whisperIdCounter = 0;
   lastSlotId = null;
   lastFinalSlotId = null;
+  cooldownMs = 0;
   resetWhispersForRun();
 }
 
 function randomInRange(min, max) {
   return min + Math.random() * (max - min);
-}
-
-function ensurePhaseOffset(phaseId) {
-  const existing = getPhaseTriggerOffset(phaseId);
-  if (typeof existing === 'number') {
-    return existing;
-  }
-  const { min, max } = WHISPER_TIMING.phaseTriggerOffsetRangeMs;
-  const offset = randomInRange(min, max);
-  setPhaseTriggerOffset(phaseId, offset);
-  return offset;
 }
 
 function resolveSlotPosition(slot, viewportWidth, viewportHeight) {
@@ -134,6 +125,8 @@ function advanceActiveWhispers(deltaTime) {
       next.push(whisper);
     } else {
       unregisterActiveWhisper(whisper.id);
+      const nextCooldown = whisper.isFinal ? 0 : WHISPER_TIMING.cooldownMs ?? 0;
+      cooldownMs = Math.max(cooldownMs, nextCooldown);
     }
   }
   activeWhispers = next;
@@ -186,6 +179,27 @@ function isFinalPhase(phaseId) {
   return FINAL_WHISPER_STATES.includes(phaseId);
 }
 
+function clamp01(value) {
+  if (Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(1, value));
+}
+
+function isProgressInsideWindow(progress, window) {
+  if (!window) return false;
+  const start = clamp01(window.start ?? 0);
+  const end = clamp01(window.end ?? 0);
+  const min = Math.min(start, end);
+  const max = Math.max(start, end);
+  return progress >= min && progress <= max;
+}
+
+function getPhaseDurationMs(phaseId) {
+  if (phaseId && typeof PHASE_DURATION_MS[phaseId] === 'number') {
+    return PHASE_DURATION_MS[phaseId];
+  }
+  return WHISPER_TIMING.defaultPhaseDurationMs;
+}
+
 export function updateWhispers(deltaTime, context = {}) {
   const {
     phaseId,
@@ -194,17 +208,28 @@ export function updateWhispers(deltaTime, context = {}) {
     viewportHeight = window.innerHeight,
   } = context;
 
-  if (phaseId && WHISPER_TEXTS[phaseId] && !hasPhaseWhisperTriggered(phaseId)) {
-    const triggerOffset = ensurePhaseOffset(phaseId);
-    if (phaseElapsedMs >= triggerOffset && !hasActiveWhisper()) {
-      spawnWhisper({
-        text: WHISPER_TEXTS[phaseId],
-        viewportWidth,
-        viewportHeight,
-        isFinal: false,
-        phaseId,
-      });
-      markPhaseWhisperTriggered(phaseId);
+  cooldownMs = Math.max(0, cooldownMs - deltaTime);
+  advanceActiveWhispers(deltaTime);
+
+  const phaseDurationMs = getPhaseDurationMs(phaseId);
+  const progress = clamp01(phaseDurationMs > 0 ? phaseElapsedMs / phaseDurationMs : 0);
+  const hasMinLead = phaseElapsedMs >= WHISPER_TIMING.minPhaseLeadMs;
+  const freeToTrigger = !hasActiveWhisper() && cooldownMs <= 0 && !hasFinalWhisperTriggered();
+
+  if (phaseId && WHISPER_TEXTS[phaseId] && hasMinLead && freeToTrigger) {
+    const windows = WHISPER_PHASE_WINDOWS[phaseId] ?? [];
+    for (let i = 0; i < windows.length; i += 1) {
+      if (!hasPhaseWindowTriggered(phaseId, i) && isProgressInsideWindow(progress, windows[i])) {
+        spawnWhisper({
+          text: WHISPER_TEXTS[phaseId],
+          viewportWidth,
+          viewportHeight,
+          isFinal: false,
+          phaseId,
+        });
+        markPhaseWindowTriggered(phaseId, i);
+        break;
+      }
     }
   }
 
@@ -213,8 +238,10 @@ export function updateWhispers(deltaTime, context = {}) {
     FINAL_WHISPER_TEXT &&
     phaseId &&
     isFinalPhase(phaseId) &&
-    phaseElapsedMs >= WHISPER_TIMING.finalDelayMs &&
-    !hasActiveWhisper()
+    hasMinLead &&
+    progress >= WHISPER_TIMING.finalProgressThreshold &&
+    !hasActiveWhisper() &&
+    cooldownMs <= 0
   ) {
     spawnWhisper({
       text: FINAL_WHISPER_TEXT,
@@ -225,8 +252,6 @@ export function updateWhispers(deltaTime, context = {}) {
     });
     markFinalWhisperTriggered();
   }
-
-  advanceActiveWhispers(deltaTime);
 }
 
 export function getActiveWhispers() {
