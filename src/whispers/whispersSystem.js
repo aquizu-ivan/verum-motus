@@ -1,40 +1,53 @@
 // src/whispers/whispersSystem.js
-// Lógica de disparo y gestión de susurros según fase y tiempo en fase.
+// Logica de disparo y gestion de susurros segun tNormalized del recorrido completo.
 import {
-  WHISPER_TEXTS,
-  FINAL_WHISPER_TEXT,
-  FINAL_WHISPER_STATES,
-  WHISPER_TIMING,
+  WHISPER_SCHEDULE,
+  WHISPER_WINDOW_RATIO,
+  WHISPER_ENVELOPE,
+  WHISPER_VISUAL,
   WHISPER_FRAME,
   WHISPER_SLOTS,
-  FINAL_WHISPER_SLOTS,
-  PHASE_TIMINGS,
-  WHISPER_PHASE_WINDOWS,
 } from './whispersConfig.js';
 import { PHASE_DURATION_MS } from '../config/constants.js';
 import {
   resetWhispersForRun,
-  hasFinalWhisperTriggered,
-  markFinalWhisperTriggered,
   hasActiveWhisper,
-  hasPhaseWindowTriggered,
-  markPhaseWindowTriggered,
+  hasScheduleWindowTriggered,
+  markScheduleWindowTriggered,
   registerActiveWhisper,
   unregisterActiveWhisper,
 } from './whispersState.js';
 
+const DEBUG_FORCE_VISIBLE = false; // DEBUG ONLY: set true para forzar un susurro visible al inicio
+const DEBUG_WHISPER_TEXT = 'DEBUG';
+const DEBUG_WHISPER_DURATION_MS = 2000;
+const DEBUG_WHISPER_OPACITY = 0.35;
+const DEBUG_WHISPER_BLUR_PX = 3;
+const DEBUG_WHISPER_OFFSET = { x: 0.5, y: 0.5 }; // centro relativo del viewport
+
 let activeWhispers = [];
-let whisperIdCounter = 0;
 let lastSlotId = null;
-let lastFinalSlotId = null;
-let cooldownMs = 0;
+let totalElapsedMs = 0;
+let debugInjected = false;
+
+const TOTAL_DURATION_MS = Object.values(PHASE_DURATION_MS).reduce((acc, value) => {
+  if (typeof value !== 'number' || Number.isNaN(value)) return acc;
+  return acc + value;
+}, 0);
+
+const SCHEDULE_WINDOWS = WHISPER_SCHEDULE.map((entry) => {
+  const halfWindow = WHISPER_WINDOW_RATIO / 2;
+  return {
+    start: clamp01(entry.center - halfWindow),
+    end: clamp01(entry.center + halfWindow),
+  };
+});
 
 export function resetWhispersSystem() {
   activeWhispers = [];
-  whisperIdCounter = 0;
   lastSlotId = null;
-  lastFinalSlotId = null;
-  cooldownMs = 0;
+  totalElapsedMs = 0;
+  debugInjected = false;
   resetWhispersForRun();
 }
 
@@ -44,43 +57,31 @@ function randomInRange(min, max) {
 
 function resolveSlotPosition(slot, viewportWidth, viewportHeight) {
   const margin = WHISPER_FRAME.marginPx;
-  const x = Math.min(viewportWidth - margin, Math.max(margin, slot.anchorX * viewportWidth));
-  const y = Math.min(viewportHeight - margin, Math.max(margin, slot.anchorY * viewportHeight));
+  const safeBaseX = viewportWidth * 0.5;
+  const safeBaseY = viewportHeight * 0.82;
+  const driftX = (slot.anchorX - 0.5) * 20; // max ~10px horizontal
+  const driftY = Math.max(-3, Math.min(3, (slot.anchorY - 0.5) * 6)); // ±3px vertical
+  const minY = viewportHeight * 0.78;
+  const maxY = viewportHeight * 0.88;
+  const x = Math.min(viewportWidth - margin, Math.max(margin, safeBaseX + driftX));
+  const unclampedY = safeBaseY + driftY;
+  const yClamped = Math.min(maxY, Math.max(minY, unclampedY));
+  const y = Math.min(viewportHeight - margin, Math.max(margin, yClamped));
   return { x, y };
 }
 
-function pickSlot(slots, lastIdRefSetter, lastId) {
+function pickSlot(slots) {
   if (!slots || slots.length === 0) {
     return null;
   }
-  const available = slots.length > 1 ? slots.filter((slot) => slot.id !== lastId) : slots;
+  const available = slots.length > 1 ? slots.filter((slot) => slot.id !== lastSlotId) : slots;
   const slot = available[Math.floor(Math.random() * available.length)];
-  if (typeof lastIdRefSetter === 'function') {
-    lastIdRefSetter(slot.id);
-  }
+  lastSlotId = slot.id;
   return slot;
 }
 
-function pickWhisperPosition(viewportWidth, viewportHeight, { isFinal } = {}) {
-  if (isFinal) {
-    const slot = pickSlot(
-      FINAL_WHISPER_SLOTS,
-      (id) => {
-        lastFinalSlotId = id;
-      },
-      lastFinalSlotId
-    );
-    if (slot) {
-      return resolveSlotPosition(slot, viewportWidth, viewportHeight);
-    }
-  }
-  const slot = pickSlot(
-    WHISPER_SLOTS,
-    (id) => {
-      lastSlotId = id;
-    },
-    lastSlotId
-  );
+function pickWhisperPosition(viewportWidth, viewportHeight) {
+  const slot = pickSlot(WHISPER_SLOTS);
   if (slot) {
     return resolveSlotPosition(slot, viewportWidth, viewportHeight);
   }
@@ -94,20 +95,31 @@ function pickWhisperPosition(viewportWidth, viewportHeight, { isFinal } = {}) {
   };
 }
 
+function clamp01(value) {
+  if (Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(1, value));
+}
+
+function smoothStep01(t) {
+  const x = clamp01(t);
+  return x * x * (3 - 2 * x);
+}
+
 function computeOpacity(whisper) {
-  const totalDuration = whisper.totalDurationMs ?? whisper.fadeInMs + whisper.holdMs + whisper.fadeOutMs;
-  const maxOpacity = whisper.maxOpacity ?? 1;
+  const totalDuration =
+    whisper.totalDurationMs ?? whisper.fadeInMs + whisper.holdMs + whisper.fadeOutMs;
+  const maxOpacity = whisper.maxOpacity ?? WHISPER_VISUAL.maxOpacity;
   const elapsed = whisper.elapsedMs;
   if (elapsed <= 0) return 0;
   if (elapsed < whisper.fadeInMs) {
-    return (elapsed / whisper.fadeInMs) * maxOpacity;
+    return smoothStep01(elapsed / whisper.fadeInMs) * maxOpacity;
   }
   if (elapsed < whisper.fadeInMs + whisper.holdMs) {
     return maxOpacity;
   }
   const fadeOutElapsed = elapsed - whisper.fadeInMs - whisper.holdMs;
   if (fadeOutElapsed < whisper.fadeOutMs) {
-    return (1 - fadeOutElapsed / whisper.fadeOutMs) * maxOpacity;
+    return (1 - smoothStep01(fadeOutElapsed / whisper.fadeOutMs)) * maxOpacity;
   }
   if (elapsed >= totalDuration) {
     return 0;
@@ -120,68 +132,85 @@ function advanceActiveWhispers(deltaTime) {
   for (const whisper of activeWhispers) {
     whisper.elapsedMs += deltaTime;
     whisper.opacity = computeOpacity(whisper);
-    const totalDuration = whisper.totalDurationMs ?? whisper.fadeInMs + whisper.holdMs + whisper.fadeOutMs;
+    const totalDuration =
+      whisper.totalDurationMs ?? whisper.fadeInMs + whisper.holdMs + whisper.fadeOutMs;
     if (whisper.elapsedMs <= totalDuration + 50) {
       next.push(whisper);
     } else {
       unregisterActiveWhisper(whisper.id);
-      const nextCooldown = whisper.isFinal ? 0 : WHISPER_TIMING.cooldownMs ?? 0;
-      cooldownMs = Math.max(cooldownMs, nextCooldown);
     }
   }
   activeWhispers = next;
 }
 
-function resolveTimings(phaseId, isFinal) {
-  if (isFinal) {
-    return {
-      fadeInMs: WHISPER_TIMING.finalFadeInMs,
-      holdMs: WHISPER_TIMING.finalHoldMs,
-      fadeOutMs: WHISPER_TIMING.finalFadeOutMs,
-    };
-  }
-  const phaseTiming = PHASE_TIMINGS[phaseId];
-  if (phaseTiming) {
-    return phaseTiming;
-  }
+function resolveEnvelopeDurations(totalDurationMs) {
+  const windowDurationMs = totalDurationMs * WHISPER_WINDOW_RATIO;
+  const fadeInMs = windowDurationMs * WHISPER_ENVELOPE.fadeInRatio;
+  const fadeOutMs = windowDurationMs * WHISPER_ENVELOPE.fadeOutRatio;
+  const holdMs = Math.max(0, windowDurationMs - fadeInMs - fadeOutMs);
   return {
-    fadeInMs: WHISPER_TIMING.fadeInMs,
-    holdMs: WHISPER_TIMING.holdMs,
-    fadeOutMs: WHISPER_TIMING.fadeOutMs,
+    fadeInMs,
+    holdMs,
+    fadeOutMs,
+    totalDurationMs: fadeInMs + holdMs + fadeOutMs,
   };
 }
 
-function spawnWhisper({ text, viewportWidth, viewportHeight, isFinal, phaseId }) {
-  const position = pickWhisperPosition(viewportWidth, viewportHeight, { isFinal });
-  const timings = resolveTimings(phaseId, isFinal);
+function spawnScheduledWhisper({ scheduleIndex, viewportWidth, viewportHeight, totalDurationMs }) {
+  const scheduleEntry = WHISPER_SCHEDULE[scheduleIndex];
+  if (!scheduleEntry) return;
+
+  const position = pickWhisperPosition(viewportWidth, viewportHeight);
+  const timings = resolveEnvelopeDurations(totalDurationMs);
 
   const whisper = {
-    id: `whisper-${++whisperIdCounter}`,
-    text,
+    id: scheduleEntry.id,
+    text: scheduleEntry.text,
     position,
-    isFinal: Boolean(isFinal),
     fadeInMs: timings.fadeInMs,
     holdMs: timings.holdMs,
     fadeOutMs: timings.fadeOutMs,
+    totalDurationMs: timings.totalDurationMs,
     elapsedMs: 0,
     opacity: 0,
-    totalDurationMs:
-      timings.fadeInMs + timings.holdMs + timings.fadeOutMs,
-    maxOpacity: isFinal ? 0.8 : 0.7,
-    motionRangePx: isFinal ? 4.5 : 2.5,
+    maxOpacity: WHISPER_VISUAL.maxOpacity,
+    motionRangePx: WHISPER_VISUAL.baseMotionRangePx,
+    jitterRangePx: WHISPER_VISUAL.jitterRangePx,
+    jitterSpeed: WHISPER_VISUAL.jitterSpeed,
+    jitterSeed: Math.random() * Math.PI * 2,
   };
 
   activeWhispers.push(whisper);
   registerActiveWhisper(whisper.id);
 }
 
-function isFinalPhase(phaseId) {
-  return FINAL_WHISPER_STATES.includes(phaseId);
-}
+function spawnDebugWhisper(viewportWidth, viewportHeight) {
+  const { x, y } = DEBUG_WHISPER_OFFSET;
+  const position = {
+    x: viewportWidth * x,
+    y: viewportHeight * y,
+  };
+  const whisper = {
+    id: 'whisper-debug',
+    text: DEBUG_WHISPER_TEXT,
+    position,
+    fadeInMs: DEBUG_WHISPER_DURATION_MS * 0.2,
+    holdMs: DEBUG_WHISPER_DURATION_MS * 0.4,
+    fadeOutMs: DEBUG_WHISPER_DURATION_MS * 0.4,
+    totalDurationMs: DEBUG_WHISPER_DURATION_MS,
+    elapsedMs: 0,
+    opacity: 0,
+    maxOpacity: DEBUG_WHISPER_OPACITY,
+    motionRangePx: WHISPER_VISUAL.baseMotionRangePx * 0.4,
+    jitterRangePx: 0.4,
+    jitterSpeed: WHISPER_VISUAL.jitterSpeed * 0.8,
+    jitterSeed: Math.random() * Math.PI * 2,
+    blurPx: DEBUG_WHISPER_BLUR_PX,
+    isDebug: true,
+  };
 
-function clamp01(value) {
-  if (Number.isNaN(value)) return 0;
-  return Math.max(0, Math.min(1, value));
+  activeWhispers.push(whisper);
+  registerActiveWhisper(whisper.id);
 }
 
 function isProgressInsideWindow(progress, window) {
@@ -193,64 +222,46 @@ function isProgressInsideWindow(progress, window) {
   return progress >= min && progress <= max;
 }
 
-function getPhaseDurationMs(phaseId) {
-  if (phaseId && typeof PHASE_DURATION_MS[phaseId] === 'number') {
-    return PHASE_DURATION_MS[phaseId];
+function findAvailableWindowIndex(normalizedProgress) {
+  for (let i = 0; i < WHISPER_SCHEDULE.length; i += 1) {
+    if (hasScheduleWindowTriggered(i)) continue;
+    if (isProgressInsideWindow(normalizedProgress, SCHEDULE_WINDOWS[i])) {
+      return i;
+    }
   }
-  return WHISPER_TIMING.defaultPhaseDurationMs;
+  return null;
 }
 
 export function updateWhispers(deltaTime, context = {}) {
-  const {
-    phaseId,
-    phaseElapsedMs = 0,
-    viewportWidth = window.innerWidth,
-    viewportHeight = window.innerHeight,
-  } = context;
+  const { viewportWidth = window.innerWidth, viewportHeight = window.innerHeight } = context;
 
-  cooldownMs = Math.max(0, cooldownMs - deltaTime);
+  totalElapsedMs += deltaTime;
   advanceActiveWhispers(deltaTime);
 
-  const phaseDurationMs = getPhaseDurationMs(phaseId);
-  const progress = clamp01(phaseDurationMs > 0 ? phaseElapsedMs / phaseDurationMs : 0);
-  const hasMinLead = phaseElapsedMs >= WHISPER_TIMING.minPhaseLeadMs;
-  const freeToTrigger = !hasActiveWhisper() && cooldownMs <= 0 && !hasFinalWhisperTriggered();
-
-  if (phaseId && WHISPER_TEXTS[phaseId] && hasMinLead && freeToTrigger) {
-    const windows = WHISPER_PHASE_WINDOWS[phaseId] ?? [];
-    for (let i = 0; i < windows.length; i += 1) {
-      if (!hasPhaseWindowTriggered(phaseId, i) && isProgressInsideWindow(progress, windows[i])) {
-        spawnWhisper({
-          text: WHISPER_TEXTS[phaseId],
-          viewportWidth,
-          viewportHeight,
-          isFinal: false,
-          phaseId,
-        });
-        markPhaseWindowTriggered(phaseId, i);
-        break;
-      }
-    }
+  const debugFlag =
+    DEBUG_FORCE_VISIBLE ||
+    (typeof window !== 'undefined' && window.__VM_DEBUG_WHISPERS__ === true);
+  if (!debugInjected && debugFlag) {
+    spawnDebugWhisper(viewportWidth, viewportHeight);
+    debugInjected = true;
+    return;
   }
 
-  if (
-    !hasFinalWhisperTriggered() &&
-    FINAL_WHISPER_TEXT &&
-    phaseId &&
-    isFinalPhase(phaseId) &&
-    hasMinLead &&
-    progress >= WHISPER_TIMING.finalProgressThreshold &&
-    !hasActiveWhisper() &&
-    cooldownMs <= 0
-  ) {
-    spawnWhisper({
-      text: FINAL_WHISPER_TEXT,
+  if (TOTAL_DURATION_MS <= 0 || hasActiveWhisper()) {
+    return;
+  }
+
+  const normalizedTime = clamp01(totalElapsedMs / TOTAL_DURATION_MS);
+  const scheduleIndex = findAvailableWindowIndex(normalizedTime);
+
+  if (scheduleIndex !== null) {
+    spawnScheduledWhisper({
+      scheduleIndex,
       viewportWidth,
       viewportHeight,
-      isFinal: true,
-      phaseId,
+      totalDurationMs: TOTAL_DURATION_MS,
     });
-    markFinalWhisperTriggered();
+    markScheduleWindowTriggered(scheduleIndex);
   }
 }
 

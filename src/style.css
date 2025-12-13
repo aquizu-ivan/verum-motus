@@ -32,19 +32,37 @@ canvas {
 }
 
 .whisper-text {
-  color: var(--whisper-nacar);
-  opacity: 0.78;
-  letter-spacing: 0.02em;
+  color: rgb(226, 190, 118);
+  opacity: 1;
+  letter-spacing: 0.06em;
   -webkit-font-smoothing: antialiased;
-  white-space: nowrap;
-  font-size: clamp(0.8rem, 1.2vw, 1rem);
+  white-space: pre-wrap;
+  font-size: clamp(1.24rem, 1.85vw, 1.56rem);
   text-shadow:
-    0 0 10px rgba(0, 0, 0, 0.7),
-    0 0 22px rgba(0, 0, 0, 0.85);
+    0 0 18px rgba(0, 0, 0, 0.45),
+    0 0 16px rgba(226, 190, 118, 0.22);
+  filter: none;
+  position: relative;
 }
 
 .whisper-text--pearled {
-  filter: blur(0.3px);
+  filter: none;
+}
+
+.whisper-text::before {
+  content: '';
+  position: absolute;
+  inset: -28%;
+  background: radial-gradient(
+    closest-side,
+    rgba(0, 0, 0, 0.4) 0%,
+    rgba(0, 0, 0, 0.2) 42%,
+    rgba(0, 0, 0, 0) 78%
+  );
+  filter: blur(8px);
+  opacity: 0.38;
+  pointer-events: none;
+  z-index: -1;
 }
 
 .whisper-text--final {
