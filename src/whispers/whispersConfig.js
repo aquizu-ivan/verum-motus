@@ -1,43 +1,35 @@
 // src/whispers/whispersConfig.js
 // Configuracion fija de susurros: textos oficiales y parametros temporales/espaciales.
-import { INTERNAL_STATES } from '../states/internalStates.js';
 
-export const WHISPER_TEXTS = {
-  [INTERNAL_STATES.INERCIA_VIVA]:
-    'El peso aparente se mantiene, pero las capas internas ya comienzan a desplazarse.',
-  [INTERNAL_STATES.PULSO_INICIAL]:
-    'El primer latido interrumpe la quietud y deja al silencio ligeramente abierto.',
-  [INTERNAL_STATES.DESLIZAMIENTO_INTERNO]:
-    'Un deslizamiento interno busca a ciegas el punto exacto donde el ritmo encaja.',
-  [INTERNAL_STATES.RITMO_EMERGE]:
-    'El movimiento encuentra su orden mínimo y deja de parecer ruido.',
-  [INTERNAL_STATES.DISTORSION_APERTURA]:
-    'La tensión se despliega en múltiples direcciones y ensancha los bordes del espacio.',
-  [INTERNAL_STATES.QUIETUD_TENSA]:
-    'La quietud contiene fuerzas activas que se sostienen sin derramarse.',
-};
-
-export const FINAL_WHISPER_TEXT =
-  'El pulso deja ver el hilo que respira bajo cada variación.';
-
-// Estados que consideramos como llegada a la fase final/estabilizada en esta version.
-export const FINAL_WHISPER_STATES = [
-  INTERNAL_STATES.RITMO_EMERGE,
-  INTERNAL_STATES.QUIETUD_TENSA,
+export const WHISPER_TEXTS = [
+  'El movimiento verdadero aparece.',
+  'La dirección interna no se negocia.',
+  'Silencio que ordena la forma.',
 ];
 
-export const WHISPER_TIMING = {
-  fadeInMs: 900,
-  holdMs: 3800,
-  fadeOutMs: 1500,
-  finalFadeInMs: 1700,
-  finalHoldMs: 8800,
-  finalFadeOutMs: 2400,
-  finalDelayMs: 8500,
-  cooldownMs: 2200,
-  minPhaseLeadMs: 1000,
-  finalProgressThreshold: 0.85,
-  defaultPhaseDurationMs: 10000,
+export const WHISPER_SCHEDULE = [
+  { id: 'whisper-1', center: 1 / 6, text: WHISPER_TEXTS[0] },
+  { id: 'whisper-2', center: 1 / 2, text: WHISPER_TEXTS[1] },
+  { id: 'whisper-3', center: 5 / 6, text: WHISPER_TEXTS[2] },
+];
+
+// Ventana total por susurro = totalDuration * WHISPER_WINDOW_RATIO (3 ventanas => 1/3 del tiempo total)
+export const WHISPER_WINDOW_RATIO = 1 / 9;
+
+export const WHISPER_ENVELOPE = {
+  fadeInRatio: 0.48,
+  fadeOutRatio: 0.48,
+};
+
+export const WHISPER_VISUAL = {
+  maxOpacity: 0.74,
+  baseMotionRangePx: 5.5,
+  jitterRangePx: 4,
+  jitterSpeed: 0.0012,
+  blurEdgePx: 2.1,
+  blurPeakPx: 0.9,
+  auraBlurPx: 3.8,
+  auraOpacityMultiplier: 0.23,
 };
 
 export const WHISPER_FRAME = {
@@ -57,40 +49,3 @@ export const WHISPER_SLOTS = [
   { id: 'mid-left-outer', anchorX: 0.24, anchorY: 0.76 },
   { id: 'mid-right-outer', anchorX: 0.76, anchorY: 0.76 },
 ];
-
-// Slots preferidos para el susurro final (nobles, cercanos al centro-bajo/laterales medios).
-export const FINAL_WHISPER_SLOTS = [
-  { id: 'final-low-center-outer', anchorX: 0.5, anchorY: 0.94 },
-  { id: 'final-low-left-outer', anchorX: 0.42, anchorY: 0.92 },
-  { id: 'final-low-right-outer', anchorX: 0.58, anchorY: 0.92 },
-  { id: 'final-mid-left-outer', anchorX: 0.36, anchorY: 0.84 },
-  { id: 'final-mid-right-outer', anchorX: 0.64, anchorY: 0.84 },
-];
-
-// Timings diferenciados por fase (ajustan fades/hold respecto a base).
-export const PHASE_TIMINGS = {
-  [INTERNAL_STATES.INERCIA_VIVA]: { fadeInMs: 850, holdMs: 3200, fadeOutMs: 1400 },
-  [INTERNAL_STATES.PULSO_INICIAL]: { fadeInMs: 880, holdMs: 3400, fadeOutMs: 1450 },
-  [INTERNAL_STATES.DESLIZAMIENTO_INTERNO]: { fadeInMs: 900, holdMs: 3600, fadeOutMs: 1500 },
-  [INTERNAL_STATES.RITMO_EMERGE]: { fadeInMs: 920, holdMs: 3800, fadeOutMs: 1550 },
-  [INTERNAL_STATES.DISTORSION_APERTURA]: { fadeInMs: 940, holdMs: 4000, fadeOutMs: 1600 },
-  [INTERNAL_STATES.QUIETUD_TENSA]: { fadeInMs: 920, holdMs: 4000, fadeOutMs: 1600 },
-};
-
-export const WHISPER_PHASE_WINDOWS = {
-  [INTERNAL_STATES.INERCIA_VIVA]: [{ start: 0.25, end: 0.35 }],
-  [INTERNAL_STATES.PULSO_INICIAL]: [{ start: 0.3, end: 0.4 }],
-  [INTERNAL_STATES.DESLIZAMIENTO_INTERNO]: [
-    { start: 0.2, end: 0.3 },
-    { start: 0.65, end: 0.75 },
-  ],
-  [INTERNAL_STATES.RITMO_EMERGE]: [
-    { start: 0.25, end: 0.35 },
-    { start: 0.7, end: 0.8 },
-  ],
-  [INTERNAL_STATES.DISTORSION_APERTURA]: [
-    { start: 0.3, end: 0.4 },
-    { start: 0.75, end: 0.85 },
-  ],
-  [INTERNAL_STATES.QUIETUD_TENSA]: [{ start: 0.35, end: 0.45 }],
-};
