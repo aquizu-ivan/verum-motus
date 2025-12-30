@@ -3,8 +3,10 @@ import { bootstrapVerumMotus } from './core/engine.js'
 import {
   toggleFullscreen,
   isFullscreenActive,
+  getFullscreenElement,
   onFullscreenChange,
 } from './ui/fullscreenController.js'
+import { logWhisperFullscreenChange } from './whispers/whispersQa.js'
 
 const root = document.getElementById('verum-root')
 if (!root) {
@@ -29,11 +31,18 @@ fullscreenButton.textContent = 'pantalla completa'
 root.appendChild(fullscreenButton)
 
 function syncFullscreenState() {
-  const active = isFullscreenActive() && document.fullscreenElement === root
-  if (active) {
+  const fullscreenElement = getFullscreenElement()
+  const active = isFullscreenActive()
+  const rootActive = active && fullscreenElement === root
+  if (rootActive) {
     root.classList.add('is-fullscreen')
   } else {
     root.classList.remove('is-fullscreen')
+  }
+  if (active) {
+    document.documentElement.classList.add('is-fullscreen')
+  } else {
+    document.documentElement.classList.remove('is-fullscreen')
   }
   fullscreenButton.setAttribute(
     'aria-label',
@@ -52,7 +61,13 @@ document.addEventListener('keydown', (event) => {
   }
 })
 
-onFullscreenChange(syncFullscreenState)
+onFullscreenChange(() => {
+  syncFullscreenState()
+  logWhisperFullscreenChange({
+    active: isFullscreenActive(),
+    fullscreenElement: getFullscreenElement(),
+  })
+})
 syncFullscreenState()
 
 bootstrapVerumMotus()
