@@ -34,35 +34,16 @@ canvas {
 .whisper-text {
   color: rgb(226, 190, 118);
   opacity: 1;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.066em;
   -webkit-font-smoothing: antialiased;
   white-space: pre-wrap;
-  font-size: clamp(1.24rem, 1.85vw, 1.56rem);
-  text-shadow:
-    0 0 18px rgba(0, 0, 0, 0.45),
-    0 0 16px rgba(226, 190, 118, 0.22);
+  font-size: clamp(1.364rem, 2.035vw, 1.716rem);
   filter: none;
   position: relative;
 }
 
 .whisper-text--pearled {
   filter: none;
-}
-
-.whisper-text::before {
-  content: '';
-  position: absolute;
-  inset: -28%;
-  background: radial-gradient(
-    closest-side,
-    rgba(0, 0, 0, 0.4) 0%,
-    rgba(0, 0, 0, 0.2) 42%,
-    rgba(0, 0, 0, 0) 78%
-  );
-  filter: blur(8px);
-  opacity: 0.38;
-  pointer-events: none;
-  z-index: -1;
 }
 
 .whisper-text--final {
@@ -91,6 +72,29 @@ canvas {
   inset: 0;
   background: #000;
   z-index: 999;
+}
+
+#whispers-ui {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(38px, 6vh, 72px);
+  width: min(860px, calc(100vw - 48px));
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  mask-image: none;
+  -webkit-mask-image: none;
+  clip-path: none;
+}
+
+.is-fullscreen .whispers-mask {
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
 }
 
 .vm-fullscreen-toggle {

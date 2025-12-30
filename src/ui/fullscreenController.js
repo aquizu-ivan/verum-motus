@@ -1,8 +1,25 @@
 // src/ui/fullscreenController.js
 // Control minimo de fullscreen para Verum Motus sin tocar el motor principal.
 
+const FULLSCREEN_EVENTS = [
+  'fullscreenchange',
+  'webkitfullscreenchange',
+  'mozfullscreenchange',
+  'MSFullscreenChange',
+];
+
+export function getFullscreenElement() {
+  return (
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement ||
+    null
+  );
+}
+
 export function isFullscreenActive() {
-  return Boolean(document.fullscreenElement);
+  return Boolean(getFullscreenElement());
 }
 
 export function enterFullscreen(element) {
@@ -28,5 +45,7 @@ export function toggleFullscreen(element) {
 }
 
 export function onFullscreenChange(handler) {
-  document.addEventListener('fullscreenchange', handler);
+  FULLSCREEN_EVENTS.forEach((eventName) => {
+    document.addEventListener(eventName, handler);
+  });
 }
